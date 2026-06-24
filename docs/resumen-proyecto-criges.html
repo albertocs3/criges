@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Resumen del proyecto CriGes</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 16mm 18mm 16mm;
+    }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: #1f2933;
+      line-height: 1.42;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    h1, h2, h3 {
+      color: #16324f;
+      line-height: 1.2;
+    }
+    h1 {
+      font-size: 25pt;
+      margin: 0 0 10px;
+    }
+    h2 {
+      font-size: 15pt;
+      margin-top: 22px;
+      border-bottom: 1px solid #d7dee8;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 12pt;
+      margin-top: 14px;
+    }
+    p {
+      margin: 6px 0;
+    }
+    ul, ol {
+      margin-top: 6px;
+      padding-left: 22px;
+    }
+    li {
+      margin: 2px 0;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 10px 0 14px;
+      font-size: 9.5pt;
+    }
+    th {
+      background: #e8f0f8;
+      color: #16324f;
+      text-align: left;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 7px;
+      vertical-align: top;
+    }
+    code, pre {
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 9pt;
+    }
+    pre {
+      background: #f6f8fb;
+      border: 1px solid #d7dee8;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+    .cover {
+      min-height: 930px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      page-break-after: always;
+    }
+    .cover .kicker {
+      color: #5b708b;
+      font-size: 12pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    .cover .subtitle {
+      font-size: 15pt;
+      color: #334e68;
+      margin-top: 8px;
+    }
+    .cover .meta {
+      margin-top: 38px;
+      color: #52606d;
+      font-size: 11pt;
+    }
+    .toc {
+      page-break-after: always;
+    }
+    .toc ol {
+      columns: 2;
+      column-gap: 26px;
+    }
+    .note {
+      background: #f8fafc;
+      border-left: 4px solid #2f80ed;
+      padding: 9px 12px;
+      margin: 10px 0;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+  <section class="cover">
+    <div class="kicker">CriGes</div>
+    <h1>Resumen del proyecto</h1>
+    <div class="subtitle">Alcance funcional, fases del MVP, arquitectura y primera rebanada vertical</div>
+    <div class="meta">
+      <p><strong>Fecha:</strong> 23/06/2026</p>
+      <p><strong>Documento:</strong> revisión general para validar qué vamos a construir.</p>
+    </div>
+  </section>
+
+  <section class="toc">
+    <h2>Índice</h2>
+    <ol>
+      <li>Visión</li>
+      <li>Objetivos principales</li>
+      <li>Roles de usuario</li>
+      <li>Principios funcionales</li>
+      <li>Módulos funcionales</li>
+      <li>Fases del MVP</li>
+      <li>Alcance de Fase 0</li>
+      <li>Arquitectura técnica</li>
+      <li>Primera rebanada vertical</li>
+      <li>Backlog técnico inicial</li>
+      <li>Plan de creación física</li>
+      <li>Pruebas y criterios de calidad</li>
+      <li>Riesgos principales</li>
+      <li>Próximos pasos</li>
+      <li>Documentación generada</li>
+    </ol>
+  </section>
+
+  <h2>1. Visión</h2>
+  <p>CriGes será un software de gestión empresarial integrado para una única empresa. Su objetivo es concentrar en una sola aplicación clientes, tiendas, catálogo, suscripciones, facturación, atención al cliente, compras, contabilidad, tesorería, configuración, usuarios, permisos, auditoría y copias.</p>
+  <div class="note">
+    <strong>Idea central:</strong> evitar registros paralelos. Cada operación debe introducirse una sola vez y producir sus efectos comerciales, fiscales, contables, bancarios y de trazabilidad de forma coherente.
+  </div>
+
+  <h2>2. Objetivos principales</h2>
+  <h3>Operativos</h3>
+  <ul>
+    <li>Mantener una ficha unificada del cliente.</li>
+    <li>Automatizar la facturación periódica de suscripciones.</li>
+    <li>Registrar comunicaciones, incidencias y actuaciones.</li>
+    <li>Emitir facturas, registrar cobros y generar asientos.</li>
+    <li>Controlar compras, gastos, pagos y stock básico.</li>
+    <li>Preparar remesas SEPA y conciliar movimientos bancarios.</li>
+  </ul>
+  <h3>Control, seguridad y cumplimiento</h3>
+  <ul>
+    <li>Aplicar permisos por rol y auditar operaciones relevantes.</li>
+    <li>Conservar documentos emitidos e impedir duplicidades.</li>
+    <li>Proteger datos personales, bancarios y secretos.</li>
+    <li>Aplicar PGC español, registros de IVA, VeriFactu, SEPA CORE y conservación documental.</li>
+  </ul>
+
+  <h2>3. Roles de usuario</h2>
+  <table>
+    <tr><th>Rol</th><th>Responsabilidades principales</th></tr>
+    <tr><td>Administrador</td><td>Acceso completo, configuración, usuarios, permisos, auditoría, costes y operaciones excepcionales.</td></tr>
+    <tr><td>Facturación</td><td>Clientes, catálogo, suscripciones, presupuestos, facturas, vencimientos y cobros.</td></tr>
+    <tr><td>Contabilidad</td><td>Compras, proveedores, asientos, informes, pagos, tesorería, remesas y conciliación.</td></tr>
+    <tr><td>Técnico</td><td>Clientes básicos, tiendas, comunicaciones e incidencias. Sin acceso económico sensible.</td></tr>
+  </table>
+
+  <h2>4. Principios funcionales</h2>
+  <ol>
+    <li>Dato maestro único por módulo propietario.</li>
+    <li>Motor único de facturación para facturas manuales, suscripciones, presupuestos y anticipos.</li>
+    <li>Automatización con supervisión en procesos económicos.</li>
+    <li>Inmutabilidad de documentos emitidos.</li>
+    <li>Correcciones mediante rectificaciones o nuevas operaciones trazables.</li>
+    <li>Auditoría de acciones relevantes.</li>
+    <li>Seguridad por defecto en servidor e interfaz.</li>
+    <li>Evolución modular sin duplicar responsabilidades.</li>
+  </ol>
+
+  <h2>5. Módulos funcionales</h2>
+  <table>
+    <tr><th>Módulo</th><th>Contenido principal</th></tr>
+    <tr><td>Clientes y tiendas</td><td>Empresas, autónomos y particulares, NIF/VAT, direcciones, tiendas, contactos, condiciones de pago, IBAN, mandato SEPA, estado e historial.</td></tr>
+    <tr><td>Catálogo</td><td>Productos, servicios, software y licencias, categorías, precio, coste, cuentas contables, impuestos, estado e inventario básico.</td></tr>
+    <tr><td>Suscripciones</td><td>Planes, conceptos periódicos, periodicidades, importes fijos o por licencias, cambios programados y facturación anticipada agrupada.</td></tr>
+    <tr><td>Facturación</td><td>Presupuestos, facturas ordinarias, rectificativas, vencimientos, cobros, impuestos, PDF, correo, VeriFactu, asientos e IVA.</td></tr>
+    <tr><td>Atención al cliente</td><td>Comunicaciones por teléfono y WhatsApp manual, incidencias, responsables, colaboradores, actuaciones, adjuntos y seguimiento.</td></tr>
+    <tr><td>Contabilidad y compras</td><td>PGC español, subcuentas, asientos, compras, gastos, IVA soportado, pagos, diario, mayor, balances y cierres.</td></tr>
+    <tr><td>Tesorería y SEPA</td><td>Cuenta bancaria, remesas SEPA CORE, mandatos, devoluciones, Norma 43, conciliación manual y previsiones.</td></tr>
+    <tr><td>Plataforma</td><td>Usuarios, roles, permisos, configuración, auditoría, notificaciones, adjuntos, diagnóstico, copias y restauración.</td></tr>
+  </table>
+
+  <h2>6. Fases del MVP</h2>
+  <table>
+    <tr><th>Fase</th><th>Nombre</th><th>Resultado esperado</th></tr>
+    <tr><td>0</td><td>Plataforma</td><td>Aplicación segura, configurable, auditable y preparada para módulos.</td></tr>
+    <tr><td>1</td><td>Maestros operativos</td><td>Clientes, tiendas, catálogo, stock inicial y cuentas base.</td></tr>
+    <tr><td>2</td><td>Facturación y atención al cliente</td><td>Facturación manual, presupuestos, rectificativas, cobros básicos e incidencias.</td></tr>
+    <tr><td>3</td><td>Suscripciones</td><td>Renovaciones periódicas, vista previa, agrupación y facturación supervisada.</td></tr>
+    <tr><td>4</td><td>Compras, contabilidad y tesorería</td><td>Compras, pagos, asientos, informes, remesas, devoluciones y conciliación.</td></tr>
+    <tr><td>5</td><td>Consolidación posterior</td><td>Mejoras, automatizaciones, informes avanzados e integraciones futuras.</td></tr>
+  </table>
+
+  <h2>7. Alcance de Fase 0</h2>
+  <p>La Fase 0 crea la base técnica y funcional del sistema.</p>
+  <ul>
+    <li>Inicialización del sistema.</li>
+    <li>Datos de empresa, cuenta bancaria, ejercicio, impuestos y numeraciones.</li>
+    <li>Usuarios, roles, permisos, inicio y cierre de sesión.</li>
+    <li>Auditoría central, notificaciones internas y adjuntos seguros.</li>
+    <li>SMTP básico, diagnóstico técnico y copia de seguridad manual completa.</li>
+  </ul>
+  <p>La primera rebanada vertical será <strong>PLT-CU-001 - Inicializar el sistema</strong>.</p>
+
+  <h2>8. Arquitectura técnica</h2>
+  <table>
+    <tr><th>Área</th><th>Decisión</th></tr>
+    <tr><td>Cliente</td><td>WPF sobre .NET 8</td></tr>
+    <tr><td>API</td><td>ASP.NET Core Web API .NET 8</td></tr>
+    <tr><td>Arquitectura</td><td>Monolito modular</td></tr>
+    <tr><td>Procesos de fondo</td><td>.NET Worker Service</td></tr>
+    <tr><td>Base de datos</td><td>SQL Server</td></tr>
+    <tr><td>Persistencia</td><td>Entity Framework Core 8</td></tr>
+    <tr><td>Seguridad</td><td>Usuario/contraseña, access token breve, refresh token opaco</td></tr>
+    <tr><td>Autorización</td><td>Permisos y políticas validadas en servidor</td></tr>
+    <tr><td>Auditoría</td><td>Append-only</td></tr>
+    <tr><td>Eventos diferidos</td><td>Outbox transaccional</td></tr>
+  </table>
+  <p>Aplicaciones principales: <code>CriGes.Desktop</code>, <code>CriGes.Api</code>, <code>CriGes.Worker</code> y <code>CriGes.DbMigrator</code>.</p>
+  <p>Cada módulo se organizará en <code>Domain</code>, <code>Application</code>, <code>Infrastructure</code>, <code>Contracts</code> y <code>Api</code>. El escritorio no accede a SQL Server ni a capas internas.</p>
+
+  <h2>9. Primera rebanada vertical</h2>
+  <p><strong>Caso de uso:</strong> <code>PLT-CU-001 - Inicializar el sistema</code>.</p>
+  <p><strong>Objetivo:</strong> dejar una instalación nueva en condiciones de acceso administrativo.</p>
+  <h3>Debe crear</h3>
+  <ul>
+    <li>Registro de instalación inicializada.</li>
+    <li>Roles base protegidos: Administrador, Facturación, Contabilidad y Técnico.</li>
+    <li>Primer usuario administrador.</li>
+    <li>Identidad técnica <code>Sistema</code>.</li>
+    <li>Empresa mínima, idioma español, euro y zona <code>Europe/Madrid</code>.</li>
+    <li>Contadores globales, auditoría activa y evento de inicialización.</li>
+  </ul>
+  <h3>Reglas clave</h3>
+  <ul>
+    <li>La inicialización solo se ejecuta una vez.</li>
+    <li>No puede existir instalación inicializada sin administrador activo.</li>
+    <li>La contraseña nunca se almacena en texto legible.</li>
+    <li>La operación es transaccional.</li>
+    <li>Un fallo no puede dejar datos parciales.</li>
+  </ul>
+
+  <h2>10. Backlog técnico inicial</h2>
+  <table>
+    <tr><th>Épica</th><th>Contenido</th></tr>
+    <tr><td>EPIC-PVS-001</td><td>Base de solución ejecutable.</td></tr>
+    <tr><td>EPIC-PVS-002</td><td>Infraestructura transversal mínima.</td></tr>
+    <tr><td>EPIC-PVS-003</td><td>Persistencia inicial de Plataforma.</td></tr>
+    <tr><td>EPIC-PVS-004</td><td>Dominio de inicialización.</td></tr>
+    <tr><td>EPIC-PVS-005</td><td>Caso de uso de inicialización.</td></tr>
+    <tr><td>EPIC-PVS-006</td><td>Contratos y API.</td></tr>
+    <tr><td>EPIC-PVS-007</td><td>Desktop: conexión y asistente inicial.</td></tr>
+    <tr><td>EPIC-PVS-008</td><td>Seguridad y privacidad.</td></tr>
+    <tr><td>EPIC-PVS-009</td><td>Pruebas de aceptación.</td></tr>
+  </table>
+  <p>La primera tanda física cubre crear solución, archivos raíz, proyectos, referencias permitidas y validación con <code>dotnet restore</code>, <code>dotnet build</code> y <code>dotnet test</code>.</p>
+
+  <h2>11. Plan de creación física</h2>
+  <pre>src/
+├── Apps/
+│   ├── CriGes.Api/
+│   ├── CriGes.Worker/
+│   └── CriGes.Desktop/
+├── Tools/
+│   └── CriGes.DbMigrator/
+├── BuildingBlocks/
+│   ├── CriGes.SharedKernel/
+│   ├── CriGes.Application.Abstractions/
+│   ├── CriGes.Infrastructure/
+│   └── CriGes.Contracts/
+└── Modules/
+    └── Platform/
+        ├── CriGes.Modules.Platform.Domain/
+        ├── CriGes.Modules.Platform.Application/
+        ├── CriGes.Modules.Platform.Infrastructure/
+        ├── CriGes.Modules.Platform.Contracts/
+        └── CriGes.Modules.Platform.Api/</pre>
+  <pre>tests/
+├── Architecture/
+├── BuildingBlocks/
+├── Platform/
+└── EndToEnd/</pre>
+
+  <h2>12. Pruebas y criterios de calidad</h2>
+  <p>La Fase 0 tiene un plan de 106 escenarios <code>PLT-TP</code>. Para la primera rebanada son críticos:</p>
+  <table>
+    <tr><th>Prueba</th><th>Escenario</th></tr>
+    <tr><td>PLT-TP-001</td><td>Inicializar una instalación nueva con datos válidos.</td></tr>
+    <tr><td>PLT-TP-002</td><td>Rechazar una segunda inicialización.</td></tr>
+    <tr><td>PLT-TP-003</td><td>Revertir completamente ante un fallo intermedio.</td></tr>
+    <tr><td>PLT-TP-004</td><td>Crear roles base, administrador, Sistema y contadores.</td></tr>
+    <tr><td>PLT-TP-005</td><td>Confirmar que la contraseña no queda legible en datos, auditoría o logs.</td></tr>
+  </table>
+
+  <h2>13. Riesgos principales</h2>
+  <table>
+    <tr><th>Riesgo</th><th>Mitigación</th></tr>
+    <tr><td>Cambios normativos en VeriFactu o factura electrónica</td><td>Validación legal antes de producción.</td></tr>
+    <tr><td>Complejidad transversal de facturación, contabilidad y tesorería</td><td>Motor común, transacciones e idempotencia.</td></tr>
+    <tr><td>Duplicidad de datos entre módulos</td><td>Propietario único de dato y contratos entre módulos.</td></tr>
+    <tr><td>Exposición de datos sensibles</td><td>Cifrado, HMAC de búsqueda, permisos y auditoría.</td></tr>
+    <tr><td>Estados parciales en procesos críticos</td><td>Transacciones ACID y Outbox.</td></tr>
+    <tr><td>Crecimiento de auditoría y adjuntos</td><td>Diseño de retención, índices y copias completas.</td></tr>
+  </table>
+
+  <h2>14. Próximos pasos</h2>
+  <ol>
+    <li>Ejecutar el plan de creación física de la solución.</li>
+    <li>Crear proyectos y referencias.</li>
+    <li>Añadir primera prueba de arquitectura.</li>
+    <li>Compilar solución vacía.</li>
+    <li>Implementar infraestructura transversal mínima.</li>
+    <li>Empezar <code>PLT-CU-001</code> por dominio y persistencia.</li>
+    <li>Exponer endpoints de instalación.</li>
+    <li>Crear asistente WPF.</li>
+    <li>Automatizar pruebas <code>PLT-TP-001</code> a <code>PLT-TP-005</code>.</li>
+  </ol>
+
+  <h2>15. Documentación generada</h2>
+  <ul>
+    <li><code>00-vision-general.md</code></li>
+    <li><code>00-requisitos-compartidos.md</code></li>
+    <li><code>01-integraciones-transversales.md</code></li>
+    <li><code>02-mapa-modulos.md</code></li>
+    <li><code>03-glosario.md</code></li>
+    <li><code>04-alcance-mvp.md</code></li>
+    <li><code>05-arquitectura-tecnica.md</code></li>
+    <li><code>06-estructura-solucion-dotnet.md</code></li>
+    <li><code>07-backlog-tecnico-primera-rebanada.md</code></li>
+    <li><code>08-plan-creacion-fisica-solucion.md</code></li>
+    <li><code>adr/README.md</code></li>
+    <li>Documentos de Plataforma: casos de uso, reglas de negocio, dominio, modelo físico, API, pantallas y pruebas.</li>
+  </ul>
+</body>
+</html>
+

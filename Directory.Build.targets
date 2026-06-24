@@ -1,0 +1,5 @@
+<Project>
+  <Target Name="EnsureBuildConfiguration" BeforeTargets="Build">
+    <!-- Placeholder for shared build targets and verification steps -->
+  </Target>
+</Project>

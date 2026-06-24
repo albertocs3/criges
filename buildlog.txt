@@ -1,0 +1,17 @@
+F:\CriGes\src\Apps\CriGes.Worker\Worker.cs(11,17): error CA1848: Para mejorar el rendimiento, use los delegados LoggerMessage en lugar de llamar a "LoggerExtensions.LogInformation(ILogger, string?, params object?[])" (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1848) [F:\CriGes\src\Apps\CriGes.Worker\CriGes.Worker.csproj]
+F:\CriGes\src\Apps\CriGes.Worker\Worker.cs(11,39): error CA1727: Usar PascalCase para marcadores de posición con nombre en la plantilla de mensaje de registro (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1727) [F:\CriGes\src\Apps\CriGes.Worker\CriGes.Worker.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(5,18): error CS1061: "IServiceCollection" no contiene una definición para "AddOpenApi" ni un método de extensión accesible "AddOpenApi" que acepte un primer argumento del tipo "IServiceCollection" (¿falta alguna directiva using o una referencia de ensamblado?) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(12,9): error CS1061: "WebApplication" no contiene una definición para "MapOpenApi" ni un método de extensión accesible "MapOpenApi" que acepte un primer argumento del tipo "WebApplication" (¿falta alguna directiva using o una referencia de ensamblado?) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(36,8): error CA1852: El tipo 'WeatherForecast' se puede sellar porque no tiene subtipos en su ensamblado contenedor y no es visible externamente (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1852) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+
+ERROR al compilar.
+
+F:\CriGes\src\Apps\CriGes.Worker\Worker.cs(11,17): error CA1848: Para mejorar el rendimiento, use los delegados LoggerMessage en lugar de llamar a "LoggerExtensions.LogInformation(ILogger, string?, params object?[])" (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1848) [F:\CriGes\src\Apps\CriGes.Worker\CriGes.Worker.csproj]
+F:\CriGes\src\Apps\CriGes.Worker\Worker.cs(11,39): error CA1727: Usar PascalCase para marcadores de posición con nombre en la plantilla de mensaje de registro (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1727) [F:\CriGes\src\Apps\CriGes.Worker\CriGes.Worker.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(5,18): error CS1061: "IServiceCollection" no contiene una definición para "AddOpenApi" ni un método de extensión accesible "AddOpenApi" que acepte un primer argumento del tipo "IServiceCollection" (¿falta alguna directiva using o una referencia de ensamblado?) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(12,9): error CS1061: "WebApplication" no contiene una definición para "MapOpenApi" ni un método de extensión accesible "MapOpenApi" que acepte un primer argumento del tipo "WebApplication" (¿falta alguna directiva using o una referencia de ensamblado?) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+F:\CriGes\src\Apps\CriGes.Api\Program.cs(36,8): error CA1852: El tipo 'WeatherForecast' se puede sellar porque no tiene subtipos en su ensamblado contenedor y no es visible externamente (https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1852) [F:\CriGes\src\Apps\CriGes.Api\CriGes.Api.csproj]
+    0 Advertencia(s)
+    5 Errores
+
+Tiempo transcurrido 00:00:05.61

@@ -1,0 +1,934 @@
+
+
+Especificación para agente de IA: módulo de incidencias / soporte
+
+Quiero implementar un módulo de incidencias dentro de mi programa de gestión de clientes y suscripciones.
+
+El objetivo es que la empresa pueda registrar, organizar, asignar, priorizar y resolver incidencias de clientes desde una única pantalla de trabajo.
+
+1. Objetivo general
+
+Crear un sistema tipo helpdesk interno, integrado con los clientes y suscripciones existentes.
+
+El módulo debe permitir:
+
+Registrar incidencias de clientes.
+Asignarlas a agentes o técnicos.
+Clasificarlas por categoría.
+Priorizarlas.
+Controlar su estado.
+Ver el progreso desde un panel general.
+Mantener trazabilidad completa de todo lo ocurrido.
+2. Entidades principales
+Incidencia / Ticket
+
+Campos mínimos:
+
+Id
+Número de ticket
+ClienteId
+TiendaId opcional
+SuscripcionId opcional
+Título
+Descripción
+Canal de entrada:
+Email
+Teléfono
+Chat
+Portal cliente
+Manual
+Categoría
+Prioridad:
+Baja
+Media
+Alta
+Crítica
+Estado:
+Nuevo
+En revisión
+En progreso
+Pendiente cliente
+Pendiente proveedor
+Resuelto
+Cerrado
+Agente asignado
+Usuario creador
+Fecha de creación
+Fecha de última actualización
+Fecha de primera respuesta
+Fecha de resolución
+Fecha de cierre
+Observaciones internas
+Es urgente
+Está bloqueado
+3. Categorías de incidencias
+
+Debe existir una tabla configurable de categorías, por ejemplo:
+
+Facturación
+Suscripciones
+Problemas técnicos
+Verifactu
+Instalación
+Servidor
+Correo electrónico
+Consulta comercial
+Otros
+
+Cada incidencia debe pertenecer a una categoría.
+
+4. Asignación de incidencias
+
+El sistema debe permitir:
+
+Asignar manualmente una incidencia a un agente.
+Cambiar el agente asignado.
+Ver qué agente está trabajando en cada ticket.
+Consultar la carga de trabajo por agente.
+Dejar tickets sin asignar.
+
+En una fase posterior se podrá añadir asignación automática según categoría, cliente o prioridad.
+
+5. Estados del ticket
+
+El flujo recomendado es:
+
+Nuevo
+En revisión
+En progreso
+Pendiente cliente
+Pendiente proveedor
+Resuelto
+Cerrado
+
+Reglas:
+
+Un ticket nuevo aparece como pendiente de revisar.
+Cuando un agente lo acepta, pasa a “En revisión” o “En progreso”.
+Si se necesita respuesta del cliente, pasa a “Pendiente cliente”.
+Si depende de un tercero, pasa a “Pendiente proveedor”.
+Cuando se soluciona, pasa a “Resuelto”.
+Tras confirmación o tras X días sin respuesta, pasa a “Cerrado”.
+6. Panel principal de incidencias
+
+Crear una pantalla principal tipo dashboard donde se pueda ver rápidamente:
+
+Total de tickets abiertos.
+Tickets nuevos.
+Tickets en progreso.
+Tickets pendientes del cliente.
+Tickets críticos.
+Tickets asignados a cada agente.
+Tickets vencidos o con mucho tiempo sin actualizar.
+Últimas incidencias creadas.
+
+La tabla principal debe permitir filtrar por:
+
+Cliente
+Estado
+Prioridad
+Categoría
+Agente asignado
+Fecha
+Canal de entrada
+7. Timeline / historial del ticket
+
+Cada ticket debe tener un historial completo con:
+
+Creación del ticket.
+Cambios de estado.
+Cambios de prioridad.
+Cambios de agente.
+Comentarios internos.
+Respuestas al cliente.
+Adjuntos añadidos.
+Fecha y usuario de cada acción.
+
+Esto es importante para trazabilidad.
+
+8. Comentarios y comunicación
+
+Cada ticket debe permitir añadir:
+
+Comentarios internos, solo visibles para la empresa.
+Respuestas al cliente.
+Adjuntos como capturas, PDFs, logs o documentos.
+
+Diferenciar claramente entre:
+
+Nota interna.
+Mensaje visible para el cliente.
+9. Integración con clientes y suscripciones
+
+Desde una incidencia debe poder verse:
+
+Datos del cliente.
+Tiendas asociadas.
+Suscripciones activas.
+Histórico de incidencias anteriores.
+Estado de facturación.
+Persona de contacto.
+
+Desde la ficha del cliente también debe verse su historial de incidencias.
+
+10. Automatizaciones iniciales
+
+Implementar una base preparada para futuras automatizaciones:
+
+Si se crea un ticket crítico, marcarlo como urgente.
+Si un ticket lleva X días en “Pendiente cliente”, enviar recordatorio.
+Si un ticket resuelto lleva X días sin respuesta, cerrarlo automáticamente.
+Si llega una nueva respuesta del cliente, reabrir el ticket si estaba resuelto o cerrado.
+Si el ticket contiene ciertas palabras clave, sugerir categoría.
+11. Roles y permisos
+
+Roles recomendados:
+
+Administrador: acceso completo.
+Supervisor: puede ver todos los tickets y reasignar.
+Agente: puede gestionar tickets asignados.
+Usuario lectura: solo consulta.
+
+Permisos mínimos:
+
+Ver tickets.
+Crear tickets.
+Editar tickets.
+Asignar tickets.
+Cambiar prioridad.
+Cambiar estado.
+Cerrar tickets.
+Ver notas internas.
+Añadir notas internas.
+Responder al cliente.
+12. Base de datos sugerida
+
+Crear las siguientes tablas:
+
+Tickets
+TicketCategorias
+TicketEstados
+TicketPrioridades
+TicketComentarios
+TicketAdjuntos
+TicketHistorial
+TicketAsignaciones
+Agentes / Usuarios
+Clientes
+Tiendas
+Suscripciones
+13. Requisitos técnicos
+
+El módulo debe estar desarrollado en C# / .NET 8, integrado dentro de una arquitectura modular.
+
+Debe seguir una arquitectura limpia:
+
+Domain
+Application
+Infrastructure
+UI
+
+El módulo debe estar preparado para integrarse con:
+
+Correo electrónico
+Chat
+Portal de cliente
+Notificaciones
+IA en el futuro
+14. Resultado esperado
+
+El resultado debe ser un módulo donde la empresa pueda controlar todo el soporte técnico desde una pantalla central, sabiendo:
+
+Qué incidencias hay abiertas.
+Qué prioridad tienen.
+Quién las está gestionando.
+En qué estado están.
+Qué cliente las ha creado.
+Cuánto tiempo llevan abiertas.
+Qué acciones se han realizado.
+
+El sistema debe ser escalable para añadir en el futuro automatizaciones inteligentes, IA, portal de cliente y conversión automática de emails en tickets.
+
+Y puedes rematar al agente con esta frase:
+
+Implementa primero una versión funcional y limpia del módulo, priorizando la estructura de datos, los casos de uso principales y una interfaz sencilla de gestión. Deja preparada la arquitectura para añadir automatizaciones, integración con email y portal de cliente más adelante.
+
+Ahora tengo que explicar al agente como realizar el modulo de contabilidad. La contabilidad funciona según el plan general contable. Permitirá introducir asientos manuales, asientos desde una opción de contabilizar facturas de compras, y automaticamente registrará los asientos correspondientes a las ventas realizadas. Tambien tendrá las opciones: listado del diario, Listado de mayor (corresponde a los asientos de una cuenta contable), listado de registro de iva tanto de proveedores como de clientes. 
+
+Copia y pega esto al agente:
+
+Especificación para agente IA: módulo de contabilidad
+
+Quiero implementar un módulo de contabilidad dentro de mi programa de gestión de clientes, suscripciones, compras, ventas y facturación.
+
+La contabilidad debe funcionar según el Plan General Contable español.
+
+1. Objetivo general
+
+Crear un módulo que permita:
+
+Gestionar el plan contable.
+Introducir asientos manuales.
+Contabilizar facturas de compras.
+Contabilizar automáticamente las ventas realizadas.
+Consultar diario contable.
+Consultar mayor de cuentas.
+Consultar registros de IVA soportado y repercutido.
+
+El módulo debe estar preparado para integrarse con facturación, compras, clientes, proveedores y Verifactu.
+
+2. Entidades principales
+Cuenta contable
+
+Campos mínimos:
+
+Id
+Código de cuenta
+Nombre
+Nivel
+Cuenta padre
+Tipo de cuenta
+Activa
+Permite movimientos
+Observaciones
+
+Ejemplos:
+
+43000001 Cliente X
+40000001 Proveedor X
+70000000 Ventas
+60000000 Compras
+47200000 IVA soportado
+47700000 IVA repercutido
+57200000 Bancos
+70500000 Prestación de servicios
+3. Asiento contable
+Cabecera del asiento
+
+Campos mínimos:
+
+Id
+Número de asiento
+Fecha
+Concepto
+Origen:
+Manual
+Venta
+Compra
+Suscripción
+Regularización
+Apertura
+Cierre
+Documento relacionado
+ClienteId opcional
+ProveedorId opcional
+FacturaVentaId opcional
+FacturaCompraId opcional
+Usuario creador
+Fecha creación
+Bloqueado / validado
+Líneas del asiento
+
+Campos mínimos:
+
+Id
+AsientoId
+Cuenta contable
+Concepto
+Debe
+Haber
+Orden
+Base imponible opcional
+Tipo IVA opcional
+Cuota IVA opcional
+ClienteId opcional
+ProveedorId opcional
+
+Regla imprescindible:
+
+Todo asiento debe estar cuadrado: la suma del Debe debe ser igual a la suma del Haber.
+
+4. Introducción de asientos manuales
+
+Crear una opción para introducir asientos manuales.
+
+Debe permitir:
+
+Fecha del asiento.
+Concepto general.
+Añadir varias líneas.
+Seleccionar cuenta contable.
+Indicar Debe o Haber.
+Validar que el asiento esté cuadrado.
+Guardar asiento.
+Editar asiento si no está bloqueado.
+Eliminar asiento si no está bloqueado.
+
+Validaciones:
+
+No permitir guardar asientos descuadrados.
+No permitir líneas sin cuenta.
+No permitir líneas con Debe y Haber a la vez.
+No permitir importe cero.
+No permitir movimientos en cuentas no imputables.
+5. Contabilización de facturas de ventas
+
+Cuando se emita una factura de venta, el sistema debe generar automáticamente el asiento contable correspondiente.
+
+Ejemplo de factura de venta con IVA:
+
+Debe:
+430 Cliente                         Total factura
+
+Haber:
+700 Ventas / 705 Servicios           Base imponible
+477 IVA repercutido                  Cuota IVA
+
+Ejemplo:
+
+Factura de 121 € con base 100 € e IVA 21 €:
+
+Debe:
+43000001 Cliente X                   121,00
+
+Haber:
+70000000 Ventas                      100,00
+47700000 IVA repercutido              21,00
+
+Debe guardar relación entre la factura y el asiento generado.
+
+Si la factura se anula o rectifica, no modificar el asiento original directamente. Crear asiento de anulación o rectificación.
+
+6. Contabilización de facturas de compras
+
+Crear una opción para contabilizar facturas de proveedores.
+
+Debe permitir introducir:
+
+Proveedor
+Número de factura proveedor
+Fecha factura
+Fecha contable
+Base imponible
+Tipo de IVA
+Cuota IVA
+Total factura
+Cuenta de gasto o compra
+Cuenta del proveedor
+Observaciones
+
+Asiento típico:
+
+Debe:
+600 Compras / 629 Gasto               Base imponible
+472 IVA soportado                     Cuota IVA
+
+Haber:
+400 Proveedor                         Total factura
+
+Ejemplo:
+
+Factura proveedor de 121 € con base 100 € e IVA 21 €:
+
+Debe:
+60000000 Compras                      100,00
+47200000 IVA soportado                 21,00
+
+Haber:
+40000001 Proveedor X                  121,00
+
+Debe guardar relación entre la factura de compra y el asiento generado.
+
+7. Registro de IVA
+
+El sistema debe generar los registros de IVA a partir de las facturas contabilizadas.
+
+Registro de IVA repercutido/clientes
+
+Debe incluir:
+
+Fecha factura
+Número factura
+Cliente
+NIF/CIF
+Base imponible
+Tipo IVA
+Cuota IVA
+Total factura
+Cuenta contable
+Asiento relacionado
+Registro de IVA soportado/proveedores
+
+Debe incluir:
+
+Fecha factura
+Número factura proveedor
+Proveedor
+NIF/CIF
+Base imponible
+Tipo IVA
+Cuota IVA
+Total factura
+Cuenta contable
+Asiento relacionado
+
+Debe poder filtrarse por:
+
+Fechas
+Cliente/proveedor
+Tipo de IVA
+Número de factura
+Trimestre
+Ejercicio
+8. Listado de diario
+
+Crear listado del diario contable.
+
+Debe mostrar todos los asientos por fecha y número.
+
+Columnas recomendadas:
+
+Fecha
+Número asiento
+Cuenta
+Nombre cuenta
+Concepto
+Debe
+Haber
+Documento
+Origen
+
+Filtros:
+
+Desde fecha
+Hasta fecha
+Cuenta
+Origen
+Cliente/proveedor
+Documento
+
+Debe permitir ver el detalle del asiento.
+
+9. Listado de mayor
+
+Crear listado de mayor por cuenta contable.
+
+Debe mostrar los movimientos de una cuenta.
+
+Columnas recomendadas:
+
+Fecha
+Número asiento
+Concepto
+Documento
+Debe
+Haber
+Saldo acumulado
+
+Filtros:
+
+Cuenta contable obligatoria
+Desde fecha
+Hasta fecha
+Ejercicio
+
+Debe calcular saldo inicial, movimientos del periodo y saldo final.
+
+10. Ejercicios contables
+
+El módulo debe contemplar ejercicios contables.
+
+Campos mínimos:
+
+Id
+Año
+Fecha inicio
+Fecha fin
+Estado:
+Abierto
+Cerrado
+Fecha cierre
+
+Reglas:
+
+No permitir crear/modificar asientos en ejercicios cerrados.
+Cada asiento debe pertenecer a un ejercicio.
+Preparar el sistema para asiento de apertura y cierre.
+11. Plan contable
+
+Debe existir una tabla de cuentas contables basada en el Plan General Contable español.
+
+Requisitos:
+
+Permitir importar un plan contable base.
+Permitir crear subcuentas.
+Permitir editar nombre de subcuentas.
+Permitir desactivar cuentas.
+No permitir borrar cuentas con movimientos.
+Diferenciar cuentas de grupo, mayor y subcuentas imputables.
+
+Ejemplos de grupos:
+
+Grupo 1: Financiación básica
+Grupo 2: Inmovilizado
+Grupo 3: Existencias
+Grupo 4: Acreedores y deudores
+Grupo 5: Cuentas financieras
+Grupo 6: Compras y gastos
+Grupo 7: Ventas e ingresos
+12. Integración con clientes y proveedores
+
+Cada cliente debe poder tener una cuenta contable asociada, normalmente del grupo 430.
+
+Cada proveedor debe poder tener una cuenta contable asociada, normalmente del grupo 400.
+
+Si un cliente/proveedor no tiene cuenta contable, el sistema debe poder crearla automáticamente siguiendo una numeración configurada.
+
+Ejemplos:
+
+Cliente X → 43000001
+Cliente Y → 43000002
+
+Proveedor A → 40000001
+Proveedor B → 40000002
+13. Automatizaciones contables iniciales
+
+Implementar reglas configurables para:
+
+Cuenta de ventas por defecto.
+Cuenta de servicios por defecto.
+Cuenta de compras por defecto.
+Cuenta de gastos por defecto.
+Cuenta de IVA soportado.
+Cuenta de IVA repercutido.
+Cuenta de clientes.
+Cuenta de proveedores.
+Cuenta de banco/caja por defecto.
+
+Ejemplo de configuración:
+
+Ventas productos → 70000000
+Servicios/suscripciones → 70500000
+Compras mercancías → 60000000
+Gastos generales → 62900000
+IVA soportado → 47200000
+IVA repercutido → 47700000
+Clientes → 430
+Proveedores → 400
+Banco → 57200000
+Caja → 57000000
+14. Reglas importantes
+Todos los importes deben guardarse con precisión decimal.
+Nunca usar double para importes contables.
+Usar decimal.
+Todo asiento debe estar cuadrado.
+Los asientos generados automáticamente deben quedar vinculados a su documento origen.
+No modificar asientos de facturas ya contabilizadas sin dejar trazabilidad.
+Si se rectifica una factura, generar asiento de rectificación.
+No permitir movimientos en ejercicios cerrados.
+Guardar usuario y fecha de creación/modificación.
+15. Pantallas mínimas
+
+Crear las siguientes pantallas:
+
+Plan contable
+Alta/edición de asiento manual
+Contabilizar factura de compra
+Diario contable
+Mayor por cuenta
+Registro de IVA soportado
+Registro de IVA repercutido
+Configuración contable
+Ejercicios contables
+16. Base de datos sugerida
+
+Tablas mínimas:
+
+ContabilidadCuentas
+ContabilidadAsientos
+ContabilidadAsientoLineas
+ContabilidadEjercicios
+ContabilidadConfiguracion
+ContabilidadRegistroIva
+FacturasVenta
+FacturasCompra
+Clientes
+Proveedores
+17. Arquitectura técnica
+
+El módulo debe implementarse en .NET 8 con arquitectura modular/limpia.
+
+Separar en capas:
+
+Domain
+Application
+Infrastructure
+UI
+
+Casos de uso recomendados:
+
+CrearAsientoManual
+ValidarAsiento
+ContabilizarFacturaVenta
+ContabilizarFacturaCompra
+ObtenerDiario
+ObtenerMayorCuenta
+ObtenerRegistroIvaSoportado
+ObtenerRegistroIvaRepercutido
+CrearCuentaCliente
+CrearCuentaProveedor
+18. Resultado esperado
+
+El resultado debe ser un módulo contable básico pero sólido, integrado con compras, ventas, clientes, proveedores y suscripciones.
+
+Debe permitir llevar la contabilidad diaria de la empresa, consultar diario, mayor y registros de IVA, y dejar preparada la base para futuras ampliaciones como:
+
+Balance de sumas y saldos.
+Cuenta de pérdidas y ganancias.
+Balance de situación.
+Modelos fiscales.
+Cierre y apertura automática.
+Exportación a Excel/PDF.
+Integración con Verifactu y facturación electrónica.
+https://www.zendesk.es/blog/ccaas/call-center/que-es-call-center/ en este enlace he encontrado información de como funciona un call center, deberia incluir algo mas en mi software
+
+Sí. De hecho, después de leer cómo funcionan los call centers modernos, yo ampliaría tu diseño para convertirlo más en un Contact Center + Helpdesk + CRM, no solo en un sistema de incidencias. Los sistemas actuales integran teléfono, email, chat, WhatsApp y tickets en una única ficha del cliente.
+
+Para tu software, añadiría estos módulos:
+
+1. Historial unificado de comunicaciones
+
+En la ficha del cliente:
+
+Llamadas
+Emails
+Tickets
+Chats
+WhatsApp
+Reuniones
+
+Ejemplo:
+
+12/06/2026 09:15
+Llamada entrante
+
+12/06/2026 09:20
+Ticket #325 creado
+
+12/06/2026 09:25
+Email enviado
+
+12/06/2026 09:40
+Ticket resuelto
+
+Así cualquier agente sabe inmediatamente qué ha ocurrido.
+
+2. Registro de llamadas
+
+Cada llamada debería generar un registro:
+
+Fecha y hora
+Duración
+Agente
+Cliente
+Tipo:
+Entrante
+Saliente
+Resultado:
+Resuelta
+Pendiente
+Sin respuesta
+Observaciones
+
+Muchos call centers registran además tiempos de espera, duración y resultado de la llamada.
+
+3. Conversión automática de llamada a incidencia
+
+Botón:
+
+Crear incidencia
+
+Desde la llamada.
+
+La incidencia hereda:
+
+Cliente
+Agente
+Resumen
+Categoría
+
+Esto ahorra muchísimo trabajo.
+
+4. Cola de trabajo
+
+En vez de ver únicamente tickets:
+
+Pendientes de atender
+────────────────────
+☎ Cliente A
+📧 Cliente B
+🎫 Ticket #123
+💬 Chat cliente C
+
+Esto se parece más a un centro de atención moderno.
+
+5. Sistema de tareas
+
+Muchas veces una incidencia genera tareas.
+
+Ejemplo:
+
+Ticket #325
+
+Tareas:
+☐ Revisar servidor
+☐ Contactar cliente
+☐ Actualizar ERP
+☑ Verificar solución
+6. Agenda de seguimiento
+
+Muy útil para soporte.
+
+Ejemplo:
+
+Llamar a cliente el viernes
+Recordar renovación en 15 días
+Revisar servidor el lunes
+7. Base de conocimiento
+
+Vas a repetir muchas incidencias:
+
+Error Verifactu
+Error SMTP
+Certificados
+Copias de seguridad
+Actualizaciones
+
+El agente debería poder buscar:
+
+Error 4112 Verifactu
+
+y obtener una solución ya documentada.
+
+8. Encuesta de satisfacción
+
+Al cerrar una incidencia:
+
+⭐⭐⭐⭐⭐
+
+¿Quedó resuelto el problema?
+
+Métrica muy utilizada en soporte.
+
+9. Dashboard para supervisión
+
+Además de los tickets abiertos:
+
+Agentes
+Alberto
+- 5 incidencias abiertas
+- 12 cerradas hoy
+
+Pedro
+- 3 incidencias abiertas
+- 8 cerradas hoy
+Estado general
+12 nuevas
+8 en progreso
+4 pendientes cliente
+2 críticas
+10. SLA (muy recomendable)
+
+Define tiempos máximos.
+
+Ejemplo:
+
+Prioridad	Primera respuesta	Resolución
+Baja	24 h	72 h
+Media	8 h	48 h
+Alta	4 h	24 h
+Crítica	1 h	8 h
+
+Si se incumple:
+
+🔴 SLA vencido
+11. Grabación de llamadas (futuro)
+
+Si algún día integras telefonía VoIP:
+
+Guardar grabación
+Transcripción automática
+Resumen IA
+
+Muchos sistemas modernos ya incluyen transcripción y resúmenes automáticos.
+
+12. Integración con tu ERP (la más importante)
+
+Esta es la funcionalidad que te diferenciará de Zendesk.
+
+Cuando el agente abre un cliente debería ver:
+
+Cliente: Joyería López
+
+Suscripción:
+✔ ERP Profesional
+
+Facturas pendientes:
+1
+
+Última actualización:
+03/06/2026
+
+Incidencias abiertas:
+2
+
+Servidor:
+Activo
+
+Licencias:
+5 usuarios
+
+Todo sin salir de la misma pantalla.
+
+13. Detección automática de incidencias
+
+Para tu ERP sería muy potente:
+
+Error Verifactu
+↓
+Generar ticket automáticamente
+
+Error SMTP
+↓
+Generar ticket automáticamente
+
+Copia seguridad fallida
+↓
+Generar ticket automáticamente
+Lo que yo haría en tu caso
+
+Dado que ya gestionas:
+
+Clientes
+Suscripciones
+Facturación
+ERP
+Servidores
+Verifactu
+
+No desarrollaría un simple módulo de incidencias.
+
+Desarrollaría un módulo llamado:
+
+Atención al Cliente
+
+con cuatro áreas:
+
+1. Incidencias
+2. Comunicaciones
+3. Tareas
+4. Base de conocimiento
+
+y todo vinculado a la ficha del cliente.
+
+Eso te da algo mucho más cercano a Zendesk, Freshdesk o HubSpot Service Hub, pero totalmente integrado con tu ERP y tus suscripciones.
