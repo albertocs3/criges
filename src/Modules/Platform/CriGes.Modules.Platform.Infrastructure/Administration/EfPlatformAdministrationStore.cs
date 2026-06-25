@@ -111,6 +111,69 @@ public sealed class EfPlatformAdministrationStore(PlatformDbContext dbContext) :
             cancellationToken);
     }
 
+    public Task<bool> IsRoleNameReservedAsync(string normalizedName, CancellationToken cancellationToken)
+    {
+        return dbContext.Roles.AnyAsync(
+            role => role.NormalizedName == normalizedName,
+            cancellationToken);
+    }
+
+    public async Task<RoleSummary> CreateRoleAsync(
+        RoleCreationData role,
+        Guid? actorUserId,
+        Guid correlationId,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database
+            .BeginTransactionAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var now = role.CreatedAtUtc.UtcDateTime;
+        dbContext.Roles.Add(new RoleEntity
+        {
+            RoleId = role.RoleId,
+            Name = role.Name,
+            NormalizedName = role.NormalizedName,
+            RoleType = 2,
+            Status = 1,
+            IsProtected = false,
+            PermissionVersion = 1,
+            CreatedAtUtc = now,
+            ModifiedAtUtc = now,
+            CreatedByUserId = actorUserId,
+            ModifiedByUserId = actorUserId
+        });
+
+        await AddAuditEventAsync(
+                occurredAtUtc: now,
+                actorUserId,
+                action: "RoleCreated",
+                entityType: "Role",
+                entityId: role.RoleId.ToString("D"),
+                previousValues: null,
+                newValues: new
+                {
+                    role.RoleId,
+                    role.Name,
+                    RoleType = "custom",
+                    Status = "active"
+                },
+                description: $"Role '{role.Name}' created.",
+                correlationId,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+        return new RoleSummary(
+            role.RoleId,
+            role.Name,
+            RoleType: 2,
+            Status: 1,
+            Array.Empty<string>());
+    }
+
     public async Task<UserSummary> CreateUserAsync(
         UserCreationData user,
         Guid? actorUserId,

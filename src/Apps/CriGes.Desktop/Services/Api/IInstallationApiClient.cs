@@ -38,6 +38,11 @@ public interface IInstallationApiClient
         string accessToken,
         CancellationToken cancellationToken = default);
 
+    Task<RoleSummaryResponse> CreateRoleAsync(
+        string accessToken,
+        CreateRoleRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<UserSummaryResponse>> GetUsersAsync(
         string accessToken,
         CancellationToken cancellationToken = default);

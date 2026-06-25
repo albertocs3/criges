@@ -67,6 +67,17 @@ public sealed class MainWindowViewModelTests
         Assert.Contains(viewModel.PlatformAuditEvents, audit => audit.Action == "PlatformInitialized");
         var initialUserCount = viewModel.PlatformUsers.Count;
 
+        viewModel.NewRoleName = "Soporte";
+
+        Assert.True(viewModel.CreateRoleCommand.CanExecute(null));
+
+        await viewModel.CreateRoleCommand.ExecuteAsync();
+
+        var supportRole = viewModel.PlatformRoles.Single(role => role.Name == "Soporte");
+        Assert.Equal(supportRole.Id, viewModel.SelectedPlatformRoleId);
+        Assert.Contains("Rol creado", viewModel.RolePermissionsMessage);
+        Assert.Contains(viewModel.PlatformAuditEvents, audit => audit.Action == "RoleCreated");
+
         var viewAuditOption = viewModel.RolePermissionOptions.Single(option => option.Name == PlatformPermissionNames.ViewAudit);
         viewAuditOption.IsGranted = false;
 
@@ -79,7 +90,7 @@ public sealed class MainWindowViewModelTests
         viewModel.NewUserFullName = "Usuario Desktop";
         viewModel.NewUserName = "usuario-desktop";
         viewModel.NewUserPhone = "+34600000000";
-        viewModel.NewUserRoleId = viewModel.PlatformRoles[0].Id;
+        viewModel.NewUserRoleId = supportRole.Id;
         viewModel.NewUserPassword = "Password123!";
         viewModel.NewUserPasswordConfirmation = "Password123!";
 
@@ -89,7 +100,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.Equal("usuario-desktop", apiClient.LastCreateUserRequest?.UserName);
         Assert.Equal(initialUserCount + 1, viewModel.PlatformUsers.Count);
-        Assert.Contains(viewModel.PlatformUsers, user => user.UserName == "usuario-desktop");
+        Assert.Contains(viewModel.PlatformUsers, user => user.UserName == "usuario-desktop" && user.Role.Name == "Soporte");
         Assert.Contains(viewModel.PlatformAuditEvents, audit => audit.Action == "UserCreated");
         Assert.Contains("Usuario creado", viewModel.PlatformMessage);
 
@@ -190,11 +201,14 @@ public sealed class MainWindowViewModelTests
     private sealed class ReadyInstallationApiClient : IInstallationApiClient
     {
         private readonly Guid _administratorRoleId = Guid.NewGuid();
+        private readonly List<RoleSummaryResponse> _roles = [];
         private readonly List<UserSummaryResponse> _users = [];
         private readonly List<AuditEventResponse> _auditEvents = [];
-        private IReadOnlyList<string> _administratorPermissions = PlatformPermissionNames.All;
+        private readonly Dictionary<Guid, IReadOnlyList<string>> _rolePermissions = [];
 
         public CreateUserRequest? LastCreateUserRequest { get; private set; }
+
+        public CreateRoleRequest? LastCreateRoleRequest { get; private set; }
 
         public IReadOnlyList<string> LastUpdatedRolePermissions { get; private set; } = [];
 
@@ -208,6 +222,13 @@ public sealed class MainWindowViewModelTests
 
         public ReadyInstallationApiClient()
         {
+            _roles.Add(new RoleSummaryResponse(
+                _administratorRoleId,
+                "Administrador",
+                "system",
+                "active",
+                PlatformPermissionNames.All));
+            _rolePermissions[_administratorRoleId] = PlatformPermissionNames.All;
             _users.Add(new UserSummaryResponse(
                 Guid.NewGuid(),
                 "Administrador",
@@ -304,12 +325,44 @@ public sealed class MainWindowViewModelTests
             string accessToken,
             CancellationToken cancellationToken = default)
         {
-            IReadOnlyList<RoleSummaryResponse> roles =
-            [
-                new RoleSummaryResponse(_administratorRoleId, "Administrador", "system", "active", _administratorPermissions)
-            ];
+            return Task.FromResult<IReadOnlyList<RoleSummaryResponse>>(_roles
+                .Select(role => role with
+                {
+                    Permissions = _rolePermissions.TryGetValue(role.Id, out var permissions)
+                        ? permissions
+                        : []
+                })
+                .ToArray());
+        }
 
-            return Task.FromResult(roles);
+        public Task<RoleSummaryResponse> CreateRoleAsync(
+            string accessToken,
+            CreateRoleRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastCreateRoleRequest = request;
+            var role = new RoleSummaryResponse(
+                Guid.NewGuid(),
+                request.Name ?? string.Empty,
+                "custom",
+                "active",
+                []);
+            _roles.Add(role);
+            _rolePermissions[role.Id] = [];
+            _auditEvents.Insert(0, new AuditEventResponse(
+                _auditEvents.Count + 1,
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid(),
+                "Administrador",
+                "Platform",
+                "RoleCreated",
+                "Role",
+                role.Id.ToString("D"),
+                "Role created.",
+                Guid.NewGuid(),
+                "success"));
+
+            return Task.FromResult(role);
         }
 
         public Task<IReadOnlyList<PermissionResponse>> GetPermissionsAsync(
@@ -329,7 +382,9 @@ public sealed class MainWindowViewModelTests
             Guid roleId,
             CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(new RolePermissionsResponse(roleId, _administratorPermissions));
+            return Task.FromResult(new RolePermissionsResponse(
+                roleId,
+                _rolePermissions.TryGetValue(roleId, out var permissions) ? permissions : []));
         }
 
         public Task<RolePermissionsResponse> UpdateRolePermissionsAsync(
@@ -338,8 +393,8 @@ public sealed class MainWindowViewModelTests
             UpdateRolePermissionsRequest request,
             CancellationToken cancellationToken = default)
         {
-            _administratorPermissions = request.Permissions ?? [];
-            LastUpdatedRolePermissions = _administratorPermissions;
+            _rolePermissions[roleId] = request.Permissions ?? [];
+            LastUpdatedRolePermissions = _rolePermissions[roleId];
             _auditEvents.Insert(0, new AuditEventResponse(
                 _auditEvents.Count + 1,
                 DateTimeOffset.UtcNow,
@@ -353,7 +408,7 @@ public sealed class MainWindowViewModelTests
                 Guid.NewGuid(),
                 "success"));
 
-            return Task.FromResult(new RolePermissionsResponse(roleId, _administratorPermissions));
+            return Task.FromResult(new RolePermissionsResponse(roleId, _rolePermissions[roleId]));
         }
 
         public Task<IReadOnlyList<UserSummaryResponse>> GetUsersAsync(
@@ -389,7 +444,7 @@ public sealed class MainWindowViewModelTests
                 request.FullName ?? string.Empty,
                 request.UserName ?? string.Empty,
                 request.Phone,
-                new RoleReferenceResponse(request.RoleId, "Administrador"),
+                new RoleReferenceResponse(request.RoleId, _roles.Single(role => role.Id == request.RoleId).Name),
                 "active",
                 null,
                 null);

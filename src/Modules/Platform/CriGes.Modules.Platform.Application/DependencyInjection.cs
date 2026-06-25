@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ListAuditEventsHandler>();
         services.AddScoped<GetRolePermissionsHandler>();
         services.AddScoped<UpdateRolePermissionsHandler>();
+        services.AddScoped<CreateRoleHandler>();
         services.AddScoped<CreateUserHandler>();
         services.AddScoped<AuthSessionContext>();
         services.AddScoped<IAuthSessionContext>(provider => provider.GetRequiredService<AuthSessionContext>());

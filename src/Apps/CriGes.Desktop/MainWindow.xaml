@@ -337,6 +337,12 @@
                                                       SelectedValue="{Binding SelectedPlatformRoleId, UpdateSourceTrigger=PropertyChanged}"
                                                       MinHeight="32"
                                                       Margin="0,10,0,10" />
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                                <TextBox Width="220"
+                                                         Text="{Binding NewRoleName, UpdateSourceTrigger=PropertyChanged}"
+                                                         Margin="0,0,10,0" />
+                                                <Button Content="Crear rol" Command="{Binding CreateRoleCommand}" />
+                                            </StackPanel>
                                             <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto">
                                                 <ItemsControl ItemsSource="{Binding RolePermissionOptions}">
                                                     <ItemsControl.ItemTemplate>

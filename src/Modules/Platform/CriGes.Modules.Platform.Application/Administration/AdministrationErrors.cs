@@ -23,4 +23,8 @@ public static class AdministrationErrors
     public static readonly AppError UserNameAlreadyReserved = new(
         "SECURITY.USERNAME_ALREADY_RESERVED",
         "The user name is already reserved.");
+
+    public static readonly AppError RoleNameAlreadyReserved = new(
+        "SECURITY.ROLENAME_ALREADY_RESERVED",
+        "The role name is already reserved.");
 }

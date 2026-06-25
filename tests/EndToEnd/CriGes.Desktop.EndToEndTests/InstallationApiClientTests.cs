@@ -248,6 +248,33 @@ public sealed class InstallationApiClientTests
     }
 
     [Fact]
+    public async Task CreateRoleAsyncSendsBearerTokenAndReturnsRole()
+    {
+        var roleId = Guid.NewGuid();
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/platform/roles", request.RequestUri?.AbsolutePath);
+            Assert.Equal("access-token", request.Headers.Authorization?.Parameter);
+
+            return JsonResponse(
+                new RoleSummaryResponse(roleId, "Soporte", "custom", "active", []),
+                HttpStatusCode.Created);
+        }))
+        {
+            BaseAddress = new Uri("http://localhost:5099/")
+        };
+
+        var client = new InstallationApiClient(httpClient);
+
+        var response = await client.CreateRoleAsync("access-token", new CreateRoleRequest("Soporte"));
+
+        Assert.Equal(roleId, response.Id);
+        Assert.Equal("Soporte", response.Name);
+        Assert.Equal("custom", response.Type);
+    }
+
+    [Fact]
     public async Task GetPermissionsAsyncSendsBearerToken()
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>

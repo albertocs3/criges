@@ -21,6 +21,10 @@ public static class PlatformAdministrationEndpoints
             .RequirePermission(PlatformPermissionNames.ManageRoles)
             .WithName("ListPlatformRoles");
 
+        group.MapPost("/roles", CreateRoleAsync)
+            .RequirePermission(PlatformPermissionNames.ManageRoles)
+            .WithName("CreatePlatformRole");
+
         group.MapGet("/roles/{roleId:guid}/permissions", GetRolePermissionsAsync)
             .RequirePermission(PlatformPermissionNames.ManageRoles)
             .WithName("GetPlatformRolePermissions");
@@ -50,6 +54,29 @@ public static class PlatformAdministrationEndpoints
     {
         var roles = await handler.HandleAsync(cancellationToken).ConfigureAwait(false);
         return Results.Ok(roles.Select(ToResponse));
+    }
+
+    private static async Task<IResult> CreateRoleAsync(
+        CreateRoleRequest request,
+        CreateRoleHandler handler,
+        IAuthSessionContext sessionContext,
+        ICorrelationContext correlationContext,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler
+            .HandleAsync(
+                new CreateRoleCommand(request.Name),
+                sessionContext.Session?.UserId,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            return ApiProblemResults.FromError(result.Error, correlationContext);
+        }
+
+        var response = ToResponse(result.Value);
+        return Results.Created($"/api/v1/platform/roles/{response.Id:D}", response);
     }
 
     private static async Task<IResult> GetRolePermissionsAsync(

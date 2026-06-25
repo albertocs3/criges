@@ -8,6 +8,7 @@ namespace CriGes.Modules.Platform.Infrastructure.Administration;
 public sealed class InMemoryPlatformAdministrationStore(InMemoryPlatformInitializationStore initializationStore) : IPlatformAdministrationStore
 {
     private readonly object syncRoot = new();
+    private readonly List<RoleSummary> customRoles = [];
     private readonly List<UserSummary> users = [];
     private readonly List<AuditEventSummary> auditEvents = [];
     private readonly Dictionary<Guid, IReadOnlyList<string>> rolePermissions = [];
@@ -32,6 +33,8 @@ public sealed class InMemoryPlatformAdministrationStore(InMemoryPlatformInitiali
                     RoleType: 1,
                     Status: 1,
                     GetPermissions(role.RoleId, role.Name)))
+                .Concat(customRoles.Select(role => role with { Permissions = GetPermissions(role.Id, role.Name) }))
+                .OrderBy(role => role.Name)
                 .ToArray());
         }
     }
@@ -113,6 +116,50 @@ public sealed class InMemoryPlatformAdministrationStore(InMemoryPlatformInitiali
         {
             return Task.FromResult(reserved || users.Any(user => user.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase)));
         }
+    }
+
+    public Task<bool> IsRoleNameReservedAsync(string normalizedName, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var snapshot = initializationStore.GetSnapshot();
+        var baseRoleReserved = snapshot?.BaseRoles.Any(role =>
+            string.Equals(role.Name, normalizedName, StringComparison.OrdinalIgnoreCase)) == true;
+
+        lock (syncRoot)
+        {
+            return Task.FromResult(baseRoleReserved || customRoles.Any(role =>
+                string.Equals(role.Name, normalizedName, StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    public Task<RoleSummary> CreateRoleAsync(
+        RoleCreationData role,
+        Guid? actorUserId,
+        Guid correlationId,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var summary = new RoleSummary(
+            role.RoleId,
+            role.Name,
+            RoleType: 2,
+            Status: 1,
+            Array.Empty<string>());
+
+        lock (syncRoot)
+        {
+            customRoles.Add(summary);
+            auditEvents.Add(CreateAuditEvent(
+                role.CreatedAtUtc.UtcDateTime,
+                actorUserId,
+                "RoleCreated",
+                "Role",
+                role.RoleId.ToString("D"),
+                $"Role '{role.Name}' created.",
+                correlationId));
+        }
+
+        return Task.FromResult(summary);
     }
 
     public async Task<UserSummary> CreateUserAsync(

@@ -37,6 +37,40 @@ public sealed class PlatformAdministrationEndpointTests
     }
 
     [Fact]
+    public async Task CreateRoleRequiresManageRolesPermissionAndRejectsDuplicateName()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var anonymous = await client.PostAsJsonAsync("/api/v1/platform/roles", new CreateRoleRequest("Soporte"));
+        var anonymousProblem = await anonymous.Content.ReadFromJsonAsync<JsonElement>();
+
+        await InitializeAndLoginAsAdminAsync(client);
+
+        var created = await client.PostAsJsonAsync("/api/v1/platform/roles", new CreateRoleRequest("Soporte"));
+        var body = await created.Content.ReadFromJsonAsync<RoleSummaryResponse>();
+        var roles = await client.GetFromJsonAsync<IReadOnlyList<RoleSummaryResponse>>("/api/v1/platform/roles");
+        var duplicate = await client.PostAsJsonAsync("/api/v1/platform/roles", new CreateRoleRequest(" soporte "));
+        var duplicateProblem = await duplicate.Content.ReadFromJsonAsync<JsonElement>();
+        var auditEvents = await client.GetFromJsonAsync<IReadOnlyList<AuditEventResponse>>("/api/v1/platform/audit-events?take=10");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        Assert.Equal("AUTH.INVALID_TOKEN", anonymousProblem.GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.NotNull(body);
+        Assert.Equal("Soporte", body.Name);
+        Assert.Equal("custom", body.Type);
+        Assert.Equal("active", body.Status);
+        Assert.Empty(body.Permissions);
+        Assert.NotNull(roles);
+        Assert.Contains(roles, role => role.Name == "Soporte");
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal("SECURITY.ROLENAME_ALREADY_RESERVED", duplicateProblem.GetProperty("code").GetString());
+        Assert.NotNull(auditEvents);
+        Assert.Contains(auditEvents, audit => audit.Action == "RoleCreated" && audit.EntityId == body.Id.ToString("D"));
+    }
+
+    [Fact]
     public async Task CreateUserRequiresManageUsersPermissionAndRejectsDuplicateUserName()
     {
         await using var factory = CreateFactory();

@@ -255,6 +255,33 @@ public sealed class InstallationApiClient : IInstallationApiClient
             "La API no devolvio permisos.");
     }
 
+    public async Task<RoleSummaryResponse> CreateRoleAsync(
+        string accessToken,
+        CreateRoleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/platform/roles")
+        {
+            Content = JsonContent.Create(request, options: JsonOptions)
+        };
+        AddBearer(httpRequest, accessToken);
+
+        using var response = await _httpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await InstallationApiException.FromResponseAsync(response, cancellationToken).ConfigureAwait(false);
+        }
+
+        var result = await response.Content
+            .ReadFromJsonAsync<RoleSummaryResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result ?? throw new InstallationApiException(
+            HttpStatusCode.InternalServerError,
+            "Respuesta vacia",
+            "La API no devolvio el rol creado.");
+    }
+
     public async Task<IReadOnlyList<UserSummaryResponse>> GetUsersAsync(
         string accessToken,
         CancellationToken cancellationToken = default)

@@ -23,6 +23,7 @@ public static class ApiProblemResults
             "PLATFORM.NOT_INITIALIZED" => StatusCodes.Status409Conflict,
             "PLATFORM.ALREADY_INITIALIZED" => StatusCodes.Status409Conflict,
             "SECURITY.USERNAME_ALREADY_RESERVED" => StatusCodes.Status409Conflict,
+            "SECURITY.ROLENAME_ALREADY_RESERVED" => StatusCodes.Status409Conflict,
             "IDEMPOTENCY.KEY_REUSED_WITH_DIFFERENT_REQUEST" => StatusCodes.Status409Conflict,
             "IDEMPOTENCY.REQUEST_IN_PROGRESS" => StatusCodes.Status409Conflict,
             "PLATFORM.INVALID_TAX_ID" => StatusCodes.Status422UnprocessableEntity,

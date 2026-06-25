@@ -12,7 +12,15 @@ public interface IPlatformAdministrationStore
 
     Task<RoleSummary?> FindRoleAsync(Guid roleId, CancellationToken cancellationToken);
 
+    Task<bool> IsRoleNameReservedAsync(string normalizedName, CancellationToken cancellationToken);
+
     Task<bool> IsUserNameReservedAsync(string normalizedUserName, CancellationToken cancellationToken);
+
+    Task<RoleSummary> CreateRoleAsync(
+        RoleCreationData role,
+        Guid? actorUserId,
+        Guid correlationId,
+        CancellationToken cancellationToken);
 
     Task<UserSummary> CreateUserAsync(
         UserCreationData user,

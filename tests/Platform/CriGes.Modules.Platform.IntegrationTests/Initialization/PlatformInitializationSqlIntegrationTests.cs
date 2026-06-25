@@ -210,6 +210,10 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.NotNull(roles);
             var administratorRoleId = roles.Single(role => role.Name == "Administrador").Id;
             var billingRoleId = roles.Single(role => role.Name == "Facturacion").Id;
+            var createRole = await client.PostAsJsonAsync(
+                "/api/v1/platform/roles",
+                new CreateRoleRequest("Soporte"));
+            var createdRole = await createRole.Content.ReadFromJsonAsync<RoleSummaryResponse>();
             var updateBillingPermissions = await client.PutAsJsonAsync(
                 $"/api/v1/platform/roles/{billingRoleId:D}/permissions",
                 new UpdateRolePermissionsRequest(
@@ -239,6 +243,10 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.Equal(HttpStatusCode.OK, refresh.StatusCode);
             Assert.Equal(session.Session.Id, refreshedSession.Session.Id);
             Assert.NotEqual(session.RefreshToken, refreshedSession.RefreshToken);
+            Assert.Equal(HttpStatusCode.Created, createRole.StatusCode);
+            Assert.NotNull(createdRole);
+            Assert.Equal("Soporte", createdRole.Name);
+            Assert.Equal("custom", createdRole.Type);
             Assert.Equal(HttpStatusCode.OK, updateBillingPermissions.StatusCode);
             Assert.NotNull(billingPermissions);
             Assert.Contains(PlatformPermissionNames.ViewAudit, billingPermissions.Permissions);
@@ -252,11 +260,17 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.NotNull(auditEvents);
             Assert.Contains(auditEvents, audit => audit.Action == "UserCreated" && audit.EntityId == createdUser.Id.ToString("D"));
             Assert.Contains(auditEvents, audit => audit.Action == "RolePermissionsUpdated" && audit.EntityId == billingRoleId.ToString("D"));
+            Assert.Contains(auditEvents, audit => audit.Action == "RoleCreated" && audit.EntityId == createdRole.Id.ToString("D"));
             Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
             Assert.Equal(1, await dbContext.UserSessions.CountAsync());
             Assert.Equal(1, await dbContext.UserSessions.CountAsync(value => value.Status == 2 && value.ClosedAtUtc != null));
             Assert.Equal(1, await dbContext.Users.CountAsync(user => user.NormalizedUserName == "USUARIO-SQL" && user.Phone == "+34919999999"));
             Assert.Equal(1, await dbContext.ReservedUserNames.CountAsync(userName => userName.NormalizedUserName == "USUARIO-SQL"));
+            Assert.Equal(1, await dbContext.Roles.CountAsync(role =>
+                role.NormalizedName == "SOPORTE" &&
+                role.RoleType == 2 &&
+                role.Status == 1 &&
+                !role.IsProtected));
             Assert.True(await dbContext.RolePermissions.AnyAsync(permission =>
                 permission.RoleId == billingRoleId &&
                 permission.Permission == PlatformPermissionNames.ViewAudit));

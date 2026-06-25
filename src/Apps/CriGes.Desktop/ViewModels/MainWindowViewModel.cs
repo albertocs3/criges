@@ -30,6 +30,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _newUserPhone = string.Empty;
     private string _newUserPassword = string.Empty;
     private string _newUserPasswordConfirmation = string.Empty;
+    private string _newRoleName = string.Empty;
     private string _rolePermissionsMessage = string.Empty;
     private string _auditMessage = string.Empty;
     private string _serverVersion = "desconocida";
@@ -89,6 +90,7 @@ public sealed class MainWindowViewModel : ObservableObject
         RefreshSessionCommand = new AsyncRelayCommand(RefreshSessionAsync, () => !IsBusy && _session.IsAuthenticated);
         OpenPlatformCommand = new AsyncRelayCommand(OpenPlatformAsync, () => !IsBusy && IsShellVisible && CanShowPlatformModule);
         BackToShellCommand = new AsyncRelayCommand(BackToShellAsync, () => !IsBusy && IsPlatformViewVisible);
+        CreateRoleCommand = new AsyncRelayCommand(CreateRoleAsync, CanCreateRole);
         CreateUserCommand = new AsyncRelayCommand(CreateUserAsync, CanCreateUser);
         SaveRolePermissionsCommand = new AsyncRelayCommand(SaveRolePermissionsAsync, CanSaveRolePermissions);
         RefreshAuditCommand = new AsyncRelayCommand(RefreshAuditAsync, CanRefreshAudit);
@@ -107,6 +109,8 @@ public sealed class MainWindowViewModel : ObservableObject
     public AsyncRelayCommand OpenPlatformCommand { get; }
 
     public AsyncRelayCommand BackToShellCommand { get; }
+
+    public AsyncRelayCommand CreateRoleCommand { get; }
 
     public AsyncRelayCommand CreateUserCommand { get; }
 
@@ -334,6 +338,12 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _newUserPasswordConfirmation;
         set => SetCreateUserProperty(ref _newUserPasswordConfirmation, value);
+    }
+
+    public string NewRoleName
+    {
+        get => _newRoleName;
+        set => SetCreateRoleProperty(ref _newRoleName, value);
     }
 
     public Guid NewUserRoleId
@@ -806,6 +816,49 @@ public sealed class MainWindowViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
+    private async Task CreateRoleAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        RolePermissionsMessage = "Creando rol...";
+
+        try
+        {
+            await EnsureFreshAccessTokenAsync(cancellationToken).ConfigureAwait(true);
+            var created = await _apiClientFactory(ApiBaseUrl)
+                .CreateRoleAsync(
+                    _session.AccessToken,
+                    new CreateRoleRequest(NewRoleName),
+                    cancellationToken)
+                .ConfigureAwait(true);
+
+            NewRoleName = string.Empty;
+            PlatformRoles = await _apiClientFactory(ApiBaseUrl)
+                .GetRolesAsync(_session.AccessToken, cancellationToken)
+                .ConfigureAwait(true);
+            SelectedPlatformRoleId = created.Id;
+            RebuildRolePermissionOptions();
+            await RefreshAuditCoreAsync(cancellationToken).ConfigureAwait(true);
+            RolePermissionsMessage = $"Rol creado: {created.Name}.";
+        }
+        catch (InstallationApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            HandleSessionLost("Sesion caducada. Vuelve a iniciar sesion.");
+        }
+        catch (InstallationApiException ex)
+        {
+            RolePermissionsMessage = $"{(int)ex.StatusCode} - {ex.Message}";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
+        {
+            RolePermissionsMessage = $"No se pudo crear el rol: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        }
+    }
+
     private async Task CreateUserAsync(CancellationToken cancellationToken)
     {
         if (NewUserPassword != NewUserPasswordConfirmation)
@@ -995,6 +1048,14 @@ public sealed class MainWindowViewModel : ObservableObject
             NewUserRoleId != Guid.Empty;
     }
 
+    private bool CanCreateRole()
+    {
+        return !IsBusy &&
+            IsPlatformViewVisible &&
+            _session.Permissions.Contains(PlatformPermissionNames.ManageRoles) &&
+            HasValue(NewRoleName);
+    }
+
     private bool CanSaveRolePermissions()
     {
         return !IsBusy &&
@@ -1066,6 +1127,14 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private void SetCreateRoleProperty(ref string field, string value, [CallerMemberName] string? propertyName = null)
+    {
+        if (SetProperty(ref field, value, propertyName))
+        {
+            CreateRoleCommand.RaiseCanExecuteChanged();
+        }
+    }
+
     private void RaiseCommandStates()
     {
         CheckApiCommand.RaiseCanExecuteChanged();
@@ -1075,6 +1144,7 @@ public sealed class MainWindowViewModel : ObservableObject
         RefreshSessionCommand.RaiseCanExecuteChanged();
         OpenPlatformCommand.RaiseCanExecuteChanged();
         BackToShellCommand.RaiseCanExecuteChanged();
+        CreateRoleCommand.RaiseCanExecuteChanged();
         CreateUserCommand.RaiseCanExecuteChanged();
         SaveRolePermissionsCommand.RaiseCanExecuteChanged();
         RefreshAuditCommand.RaiseCanExecuteChanged();
