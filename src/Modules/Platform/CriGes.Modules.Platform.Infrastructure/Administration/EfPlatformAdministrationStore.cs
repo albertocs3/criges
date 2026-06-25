@@ -33,17 +33,18 @@ public sealed class EfPlatformAdministrationStore(PlatformDbContext dbContext) :
                 dbContext.Roles.AsNoTracking(),
                 user => user.RoleId,
                 role => role.RoleId,
-                (user, role) => new UserSummary(
-                    user.UserId,
-                    user.FullName,
-                    user.UserName,
-                    user.Phone,
-                    role.RoleId,
-                    role.Name,
-                    user.Status,
-                    user.LastSuccessfulLoginUtc,
-                    user.BlockedUntilUtc))
-            .OrderBy(user => user.UserName)
+                (user, role) => new { User = user, Role = role })
+            .OrderBy(value => value.User.UserName)
+            .Select(value => new UserSummary(
+                value.User.UserId,
+                value.User.FullName,
+                value.User.UserName,
+                value.User.Phone,
+                value.Role.RoleId,
+                value.Role.Name,
+                value.User.Status,
+                value.User.LastSuccessfulLoginUtc,
+                value.User.BlockedUntilUtc))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
     }
