@@ -18,5 +18,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Modules\Platform\CriGes.Modules.Platform.Domain\CriGes.Modules.Platform.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
 

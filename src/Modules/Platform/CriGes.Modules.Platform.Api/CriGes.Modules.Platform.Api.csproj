@@ -3,6 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="..\CriGes.Modules.Platform.Application\CriGes.Modules.Platform.Application.csproj" />
     <ProjectReference Include="..\CriGes.Modules.Platform.Contracts\CriGes.Modules.Platform.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\CriGes.Contracts\CriGes.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
   </ItemGroup>
 
   <PropertyGroup>

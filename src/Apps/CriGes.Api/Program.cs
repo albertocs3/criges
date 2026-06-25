@@ -1,39 +1,84 @@
+using CriGes.Api.Correlation;
+using CriGes.Api.Middleware;
+using CriGes.Application.Abstractions;
+using CriGes.Infrastructure;
+using CriGes.Modules.Platform.Api;
+using CriGes.Modules.Platform.Api.Administration;
+using CriGes.Modules.Platform.Api.Auth;
+using CriGes.Modules.Platform.Api.Installation;
+using CriGes.Modules.Platform.Application;
+using CriGes.Modules.Platform.Infrastructure;
+using CriGes.Modules.Platform.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddHealthChecks();
+builder.Services.AddScoped<ICorrelationContext, CorrelationContext>();
+builder.Services.AddCriGesInfrastructure();
+builder.Services.AddPlatformApplication();
+builder.Services.AddPlatformInfrastructure(builder.Configuration);
+builder.Services.AddPlatformApi();
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("platform-initialization", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
-
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<PlatformBearerTokenMiddleware>();
+app.UseRateLimiter();
+app.MapHealthChecks("/health/live");
+app.MapGet("/health/ready", GetReadinessAsync);
+app.MapGet("/", () => Results.Ok(new { Name = "CriGes.Api", Status = "running" }));
+app.MapPlatformAuthEndpoints();
+app.MapPlatformPermissionEndpoints();
+app.MapPlatformAdministrationEndpoints();
+app.MapPlatformEndpoints();
 
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+static async Task<IResult> GetReadinessAsync(PlatformDbContext dbContext, CancellationToken cancellationToken)
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    try
+    {
+        if (!await dbContext.Database.CanConnectAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return Results.Json(
+                new { Status = "databaseUnavailable", Detail = "No se pudo conectar con la base de datos.", PendingMigrations = 0 },
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
+        var pendingMigrations = await dbContext.Database
+            .GetPendingMigrationsAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var pendingMigrationsCount = pendingMigrations.Count();
+
+        if (pendingMigrationsCount > 0)
+        {
+            return Results.Json(
+                new { Status = "databaseNotMigrated", Detail = "Hay migraciones pendientes.", PendingMigrations = pendingMigrationsCount },
+                statusCode: StatusCodes.Status503ServiceUnavailable);
+        }
+
+        return Results.Ok(new { Status = "ready", Detail = (string?)null, PendingMigrations = 0 });
+    }
+    catch (Exception ex) when (ex is InvalidOperationException or Microsoft.Data.SqlClient.SqlException)
+    {
+        return Results.Json(
+            new { Status = "databaseUnavailable", Detail = ex.Message, PendingMigrations = 0 },
+            statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
 }
+
+public partial class Program;

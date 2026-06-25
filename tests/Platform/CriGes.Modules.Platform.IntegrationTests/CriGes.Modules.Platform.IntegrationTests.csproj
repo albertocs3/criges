@@ -9,6 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector"  />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
     <PackageReference Include="Microsoft.NET.Test.Sdk"  />
     <PackageReference Include="xunit"  />
     <PackageReference Include="xunit.runner.visualstudio"  />
@@ -16,6 +18,13 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Apps\CriGes.Api\CriGes.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Platform\CriGes.Modules.Platform.Contracts\CriGes.Modules.Platform.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Platform\CriGes.Modules.Platform.Infrastructure\CriGes.Modules.Platform.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Platform\CriGes.Modules.Platform.Application\CriGes.Modules.Platform.Application.csproj" />
   </ItemGroup>
 
 </Project>

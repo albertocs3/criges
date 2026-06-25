@@ -1,12 +1,456 @@
-﻿<Window x:Class="CriGes.Desktop.MainWindow"
+<Window x:Class="CriGes.Desktop.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CriGes.Desktop"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="CriGes"
+        Height="720"
+        Width="980"
+        MinHeight="560"
+        MinWidth="760"
+        Loaded="OnLoaded">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#1F2933" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="0,4,16,12" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="PasswordBox">
+            <Setter Property="MinHeight" Value="32" />
+            <Setter Property="Margin" Value="0,4,16,12" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="MinHeight" Value="34" />
+            <Setter Property="Padding" Value="16,6" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="18" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,18,0,10" />
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+    </Window.Resources>
 
+    <Grid Background="#F4F6F8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" BorderBrush="#D8DEE6" BorderThickness="0,0,0,1" Padding="24,18">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="CriGes Desktop" FontSize="24" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding StatusText}" Margin="0,4,20,0" Foreground="#52616B" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBox Width="260"
+                             Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="URL base de CriGes.Api" />
+                    <Button Content="Comprobar API" Command="{Binding CheckApiCommand}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="24">
+                <StackPanel Visibility="{Binding RequiresInitialization, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Text="Asistente inicial" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,8" />
+                    <TextBlock Text="La API indica que la plataforma aun no esta inicializada. Completa los datos base para crear la empresa, el administrador y la configuracion inicial."
+                               Foreground="#52616B"
+                               Margin="0,0,0,10" />
+
+                    <TextBlock Text="Empresa" Style="{StaticResource SectionTitle}" />
+                    <UniformGrid Columns="2">
+                        <StackPanel>
+                            <TextBlock Text="Razon social" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding LegalName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Nombre comercial" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding TradeName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="NIF/CIF" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding TaxId, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Email" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Telefono" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <TextBlock Text="Direccion" Style="{StaticResource SectionTitle}" />
+                    <StackPanel>
+                        <TextBlock Text="Linea" Style="{StaticResource FieldLabel}" />
+                        <TextBox Text="{Binding AddressLine, UpdateSourceTrigger=PropertyChanged}" />
+                    </StackPanel>
+                    <UniformGrid Columns="2">
+                        <StackPanel>
+                            <TextBlock Text="Codigo postal" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Ciudad" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding City, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Provincia/region" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding Region, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Pais" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding CountryCode, UpdateSourceTrigger=PropertyChanged}" MaxLength="2" />
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <TextBlock Text="Administrador" Style="{StaticResource SectionTitle}" />
+                    <UniformGrid Columns="2">
+                        <StackPanel>
+                            <TextBlock Text="Nombre completo" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding AdminFullName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Usuario" Style="{StaticResource FieldLabel}" />
+                            <TextBox Text="{Binding AdminUserName, UpdateSourceTrigger=PropertyChanged}" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Contrasena" Style="{StaticResource FieldLabel}" />
+                            <PasswordBox x:Name="AdminPasswordBox" PasswordChanged="AdminPasswordChanged" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Text="Confirmar contrasena" Style="{StaticResource FieldLabel}" />
+                            <PasswordBox x:Name="AdminPasswordConfirmationBox" PasswordChanged="AdminPasswordConfirmationChanged" />
+                        </StackPanel>
+                    </UniformGrid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                        <Button Content="Inicializar plataforma" Command="{Binding InitializeCommand}" />
+                        <TextBlock Text="{Binding ResultText}" VerticalAlignment="Center" Foreground="#52616B" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding IsLoginVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                            MaxWidth="520"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="Inicio de sesion" FontSize="28" FontWeight="SemiBold" />
+                    <TextBlock Text="La plataforma esta inicializada. Accede con tu usuario para continuar al shell operativo."
+                               Foreground="#52616B"
+                               Margin="0,8,0,20" />
+
+                    <TextBlock Text="Usuario" Style="{StaticResource FieldLabel}" />
+                    <TextBox Text="{Binding LoginUserName, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <TextBlock Text="Contrasena" Style="{StaticResource FieldLabel}" />
+                    <PasswordBox x:Name="LoginPasswordBox" PasswordChanged="LoginPasswordChanged" />
+
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="Iniciar sesion" Command="{Binding LoginCommand}" />
+                        <Button Content="Comprobar API" Command="{Binding CheckApiCommand}" />
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding LoginMessage}"
+                               Foreground="#52616B"
+                               Margin="0,16,0,0" />
+
+                    <Border BorderBrush="#D8DEE6" BorderThickness="0,1,0,0" Margin="0,24,0,0" Padding="0,14,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{Binding StatusText}" Foreground="#52616B" />
+                            <TextBlock Foreground="#52616B" Margin="0,4,0,0">
+                                <Run Text="Version servidor: " />
+                                <Run Text="{Binding ServerVersion}" />
+                            </TextBlock>
+                            <TextBlock Foreground="#52616B" Margin="0,4,0,0">
+                                <Run Text="Version Desktop: " />
+                                <Run Text="{Binding ClientVersion}" />
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Visibility="{Binding NeedsAttention, Converter={StaticResource BoolToVisibilityConverter}}"
+                            MaxWidth="760"
+                            HorizontalAlignment="Left">
+                    <TextBlock Text="Conexion pendiente" FontSize="28" FontWeight="SemiBold" />
+                    <TextBlock Text="{Binding StatusText}"
+                               Foreground="#52616B"
+                               Margin="0,8,0,20" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Reintentar" Command="{Binding CheckApiCommand}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid Visibility="{Binding IsShellVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" BorderBrush="#D8DEE6" BorderThickness="0,0,0,1" Padding="0,0,0,16">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="CriGes" FontSize="28" FontWeight="SemiBold" />
+                                <TextBlock Text="Shell operativo inicial" Foreground="#52616B" Margin="0,4,0,0" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel Margin="0,0,16,0">
+                                    <TextBlock Text="{Binding CurrentUserDisplayName}" FontWeight="SemiBold" TextAlignment="Right" />
+                                    <TextBlock Text="{Binding CurrentUserRole}" Foreground="#52616B" TextAlignment="Right" />
+                                </StackPanel>
+                                <Button Content="Refrescar sesion" Command="{Binding RefreshSessionCommand}" />
+                                <Button Content="Cerrar sesion" Command="{Binding LogoutCommand}" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <Grid Grid.Row="1" Margin="0,24,0,0">
+                        <UniformGrid Columns="2"
+                                     Visibility="{Binding IsShellHomeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Border Background="White"
+                                    BorderBrush="#D8DEE6"
+                                    BorderThickness="1"
+                                    Padding="18"
+                                    Margin="0,0,16,16"
+                                    Visibility="{Binding CanShowPlatformModule, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Plataforma" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="Usuarios, roles, configuracion y auditoria."
+                                               Foreground="#52616B"
+                                               Margin="0,8,0,12" />
+                                    <Button Content="Abrir Plataforma"
+                                            Command="{Binding OpenPlatformCommand}"
+                                            HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White"
+                                    BorderBrush="#D8DEE6"
+                                    BorderThickness="1"
+                                    Padding="18"
+                                    Margin="0,0,16,16"
+                                    Visibility="{Binding CanShowOperationsModule, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Operaciones" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="Los modulos de negocio apareceran aqui cuando tengan permisos y endpoints."
+                                               Foreground="#52616B"
+                                               Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border Background="White"
+                                    BorderBrush="#D8DEE6"
+                                    BorderThickness="1"
+                                    Padding="18"
+                                    Margin="0,0,16,16"
+                                    Visibility="{Binding CanShowDiagnosticsModule, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <StackPanel>
+                                    <TextBlock Text="Diagnostico" FontSize="18" FontWeight="SemiBold" />
+                                    <TextBlock Text="Estado tecnico, salud de servicios y comprobaciones operativas."
+                                               Foreground="#52616B"
+                                               Margin="0,8,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <StackPanel Visibility="{Binding IsPlatformViewVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                                <Button Content="Volver" Command="{Binding BackToShellCommand}" />
+                                <TextBlock Text="Plataforma"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1.05*" />
+                                    <ColumnDefinition Width="1.3*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Grid Grid.Column="0" Margin="0,0,18,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="1.25*" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <Border Grid.Row="0"
+                                            Background="White"
+                                            BorderBrush="#D8DEE6"
+                                            BorderThickness="1"
+                                            Padding="16"
+                                            Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <TextBlock Text="Usuarios" FontSize="16" FontWeight="SemiBold" />
+                                            <DataGrid ItemsSource="{Binding PlatformUsers}"
+                                                      AutoGenerateColumns="False"
+                                                      IsReadOnly="True"
+                                                      CanUserAddRows="False"
+                                                      HeadersVisibility="Column"
+                                                      MinHeight="150"
+                                                      Margin="0,10,0,0">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Usuario" Binding="{Binding UserName}" Width="*" />
+                                                    <DataGridTextColumn Header="Nombre" Binding="{Binding FullName}" Width="1.2*" />
+                                                    <DataGridTextColumn Header="Rol" Binding="{Binding Role.Name}" Width="*" />
+                                                    <DataGridTextColumn Header="Estado" Binding="{Binding Status}" Width="Auto" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="1"
+                                            Background="White"
+                                            BorderBrush="#D8DEE6"
+                                            BorderThickness="1"
+                                            Padding="16"
+                                            Margin="0,0,0,14">
+                                        <StackPanel>
+                                            <TextBlock Text="Permisos por rol" FontSize="16" FontWeight="SemiBold" />
+                                            <ComboBox ItemsSource="{Binding PlatformRoles}"
+                                                      DisplayMemberPath="Name"
+                                                      SelectedValuePath="Id"
+                                                      SelectedValue="{Binding SelectedPlatformRoleId, UpdateSourceTrigger=PropertyChanged}"
+                                                      MinHeight="32"
+                                                      Margin="0,10,0,10" />
+                                            <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto">
+                                                <ItemsControl ItemsSource="{Binding RolePermissionOptions}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <CheckBox IsChecked="{Binding IsGranted, UpdateSourceTrigger=PropertyChanged}"
+                                                                      Margin="0,0,0,8">
+                                                                <StackPanel>
+                                                                    <TextBlock Text="{Binding Description}" FontWeight="SemiBold" />
+                                                                    <TextBlock Text="{Binding Name}" Foreground="#52616B" />
+                                                                </StackPanel>
+                                                            </CheckBox>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </ScrollViewer>
+                                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                                <Button Content="Guardar permisos" Command="{Binding SaveRolePermissionsCommand}" />
+                                                <TextBlock Text="{Binding RolePermissionsMessage}"
+                                                           Foreground="#52616B"
+                                                           VerticalAlignment="Center" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <Border Grid.Row="2"
+                                            Background="White"
+                                            BorderBrush="#D8DEE6"
+                                            BorderThickness="1"
+                                            Padding="16">
+                                        <StackPanel>
+                                            <TextBlock Text="Permisos" FontSize="16" FontWeight="SemiBold" />
+                                            <ListBox ItemsSource="{Binding PlatformPermissions}"
+                                                     DisplayMemberPath="Description"
+                                                     MinHeight="180"
+                                                     Margin="0,10,0,0" />
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+
+                                <Border Grid.Column="1"
+                                        Background="White"
+                                        BorderBrush="#D8DEE6"
+                                        BorderThickness="1"
+                                        Padding="18">
+                                    <StackPanel>
+                                        <TextBlock Text="Alta de usuario" FontSize="16" FontWeight="SemiBold" />
+
+                                        <TextBlock Text="Nombre completo" Style="{StaticResource FieldLabel}" Margin="0,14,0,0" />
+                                        <TextBox Text="{Binding NewUserFullName, UpdateSourceTrigger=PropertyChanged}" />
+
+                                        <TextBlock Text="Usuario" Style="{StaticResource FieldLabel}" />
+                                        <TextBox Text="{Binding NewUserName, UpdateSourceTrigger=PropertyChanged}" />
+
+                                        <TextBlock Text="Telefono" Style="{StaticResource FieldLabel}" />
+                                        <TextBox Text="{Binding NewUserPhone, UpdateSourceTrigger=PropertyChanged}" />
+
+                                        <TextBlock Text="Rol" Style="{StaticResource FieldLabel}" />
+                                        <ComboBox ItemsSource="{Binding PlatformRoles}"
+                                                  DisplayMemberPath="Name"
+                                                  SelectedValuePath="Id"
+                                                  SelectedValue="{Binding NewUserRoleId, UpdateSourceTrigger=PropertyChanged}"
+                                                  MinHeight="32"
+                                                  Margin="0,4,16,12" />
+
+                                        <TextBlock Text="Contrasena" Style="{StaticResource FieldLabel}" />
+                                        <PasswordBox x:Name="NewUserPasswordBox" PasswordChanged="NewUserPasswordChanged" />
+
+                                        <TextBlock Text="Confirmar contrasena" Style="{StaticResource FieldLabel}" />
+                                        <PasswordBox x:Name="NewUserPasswordConfirmationBox" PasswordChanged="NewUserPasswordConfirmationChanged" />
+
+                                        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                            <Button Content="Crear usuario" Command="{Binding CreateUserCommand}" />
+                                            <TextBlock Text="{Binding PlatformMessage}"
+                                                       Foreground="#52616B"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+
+                                        <Border BorderBrush="#D8DEE6"
+                                                BorderThickness="0,1,0,0"
+                                                Margin="0,18,0,0"
+                                                Padding="0,14,0,0">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="Auditoria reciente"
+                                                               FontSize="16"
+                                                               FontWeight="SemiBold"
+                                                               VerticalAlignment="Center"
+                                                               Margin="0,0,12,0" />
+                                                    <Button Content="Refrescar" Command="{Binding RefreshAuditCommand}" />
+                                                    <TextBlock Text="{Binding AuditMessage}"
+                                                               Foreground="#52616B"
+                                                               VerticalAlignment="Center" />
+                                                </StackPanel>
+                                                <DataGrid ItemsSource="{Binding PlatformAuditEvents}"
+                                                          AutoGenerateColumns="False"
+                                                          IsReadOnly="True"
+                                                          CanUserAddRows="False"
+                                                          HeadersVisibility="Column"
+                                                          MinHeight="180"
+                                                          Margin="0,10,0,0">
+                                                    <DataGrid.Columns>
+                                                        <DataGridTextColumn Header="Fecha" Binding="{Binding OccurredAtUtc}" Width="1.2*" />
+                                                        <DataGridTextColumn Header="Accion" Binding="{Binding Action}" Width="*" />
+                                                        <DataGridTextColumn Header="Actor" Binding="{Binding ActorDisplayName}" Width="*" />
+                                                        <DataGridTextColumn Header="Entidad" Binding="{Binding EntityType}" Width="Auto" />
+                                                        <DataGridTextColumn Header="Descripcion" Binding="{Binding Description}" Width="1.6*" />
+                                                    </DataGrid.Columns>
+                                                </DataGrid>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

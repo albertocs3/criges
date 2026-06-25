@@ -1,9 +1,8 @@
-﻿<Application x:Class="CriGes.Desktop.App"
+<Application x:Class="CriGes.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:CriGes.Desktop"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
     </Application.Resources>
 </Application>

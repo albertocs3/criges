@@ -1,7 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Modules\Platform\CriGes.Modules.Platform.Contracts\CriGes.Modules.Platform.Contracts.csproj" />
     <ProjectReference Include="..\..\BuildingBlocks\CriGes.Contracts\CriGes.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <PropertyGroup>
