@@ -438,7 +438,9 @@
                                                           MinHeight="180"
                                                           Margin="0,10,0,0">
                                                     <DataGrid.Columns>
-                                                        <DataGridTextColumn Header="Fecha" Binding="{Binding OccurredAtUtc}" Width="1.2*" />
+                                                        <DataGridTextColumn Header="Fecha"
+                                                                            Binding="{Binding OccurredAtUtc, Converter={StaticResource LocalDateTimeDisplayConverter}}"
+                                                                            Width="1.2*" />
                                                         <DataGridTextColumn Header="Accion" Binding="{Binding Action}" Width="*" />
                                                         <DataGridTextColumn Header="Actor" Binding="{Binding ActorDisplayName}" Width="*" />
                                                         <DataGridTextColumn Header="Entidad" Binding="{Binding EntityType}" Width="Auto" />

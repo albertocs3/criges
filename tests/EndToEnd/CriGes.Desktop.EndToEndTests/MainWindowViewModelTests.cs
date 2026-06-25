@@ -1,3 +1,5 @@
+using System.Globalization;
+using CriGes.Desktop.Converters;
 using CriGes.Desktop.Configuration;
 using CriGes.Desktop.Services.Api;
 using CriGes.Desktop.ViewModels;
@@ -9,6 +11,17 @@ namespace CriGes.Desktop.EndToEndTests;
 
 public sealed class MainWindowViewModelTests
 {
+    [Fact]
+    public void LocalDateTimeDisplayConverterFormatsUtcAuditDatesAsLocalDayMonthYear()
+    {
+        var converter = new LocalDateTimeDisplayConverter();
+        var utcDate = new DateTimeOffset(2026, 6, 25, 10, 5, 0, TimeSpan.Zero);
+
+        var result = converter.Convert(utcDate, typeof(string), null!, CultureInfo.InvariantCulture);
+
+        Assert.Equal(utcDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm", CultureInfo.InvariantCulture), result);
+    }
+
     [Fact]
     public async Task CheckApiCommandShowsLoginWhenPlatformIsInitialized()
     {

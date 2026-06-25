@@ -1,8 +1,10 @@
 <Application x:Class="CriGes.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="clr-namespace:CriGes.Desktop.Converters"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <converters:LocalDateTimeDisplayConverter x:Key="LocalDateTimeDisplayConverter" />
     </Application.Resources>
 </Application>
