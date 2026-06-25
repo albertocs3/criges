@@ -74,6 +74,7 @@ public sealed class MainWindowViewModelTests
 
         Assert.DoesNotContain(PlatformPermissionNames.ViewAudit, apiClient.LastUpdatedRolePermissions);
         Assert.Contains("guardados", viewModel.RolePermissionsMessage, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(viewModel.PlatformAuditEvents, audit => audit.Action == "RolePermissionsUpdated");
 
         viewModel.NewUserFullName = "Usuario Desktop";
         viewModel.NewUserName = "usuario-desktop";
@@ -159,6 +160,33 @@ public sealed class MainWindowViewModelTests
         Assert.Contains("No se pudo cargar Plataforma", viewModel.PlatformMessage);
     }
 
+    [Fact]
+    public async Task LoginAppliesCurrentUserPermissionsToVisibleShellModules()
+    {
+        var apiClient = new ReadyInstallationApiClient
+        {
+            CurrentUserPermissions = [PlatformPermissionNames.UseAttachments]
+        };
+        var viewModel = new MainWindowViewModel(
+            new DesktopSettings
+            {
+                Api = new DesktopSettings.ApiSettings { BaseUrl = "http://localhost:5099/" }
+            },
+            _ => apiClient);
+
+        await viewModel.CheckApiCommand.ExecuteAsync();
+        viewModel.LoginUserName = "facturacion";
+        viewModel.LoginPassword = "Password123!";
+
+        await viewModel.LoginCommand.ExecuteAsync();
+
+        Assert.True(viewModel.IsShellVisible);
+        Assert.False(viewModel.CanShowPlatformModule);
+        Assert.True(viewModel.CanShowOperationsModule);
+        Assert.False(viewModel.CanShowDiagnosticsModule);
+        Assert.False(viewModel.OpenPlatformCommand.CanExecute(null));
+    }
+
     private sealed class ReadyInstallationApiClient : IInstallationApiClient
     {
         private readonly Guid _administratorRoleId = Guid.NewGuid();
@@ -173,6 +201,8 @@ public sealed class MainWindowViewModelTests
         public bool FailNextLoginWithActiveSession { get; set; }
 
         public bool FailNextGetUsers { get; set; }
+
+        public IReadOnlyList<string> CurrentUserPermissions { get; set; } = PlatformPermissionNames.All;
 
         public int CloseDevelopmentActiveSessionsCalls { get; private set; }
 
@@ -244,7 +274,7 @@ public sealed class MainWindowViewModelTests
                 "Administrador",
                 "admin",
                 new CurrentUserRoleResponse(Guid.NewGuid(), "Administrador"),
-                PlatformPermissionNames.All,
+                CurrentUserPermissions,
                 new CurrentUserSessionResponse(Guid.NewGuid(), DateTimeOffset.UtcNow.AddHours(5))));
         }
 
@@ -310,6 +340,18 @@ public sealed class MainWindowViewModelTests
         {
             _administratorPermissions = request.Permissions ?? [];
             LastUpdatedRolePermissions = _administratorPermissions;
+            _auditEvents.Insert(0, new AuditEventResponse(
+                _auditEvents.Count + 1,
+                DateTimeOffset.UtcNow,
+                Guid.NewGuid(),
+                "Administrador",
+                "Platform",
+                "RolePermissionsUpdated",
+                "Role",
+                roleId.ToString("D"),
+                "Permissions updated.",
+                Guid.NewGuid(),
+                "success"));
 
             return Task.FromResult(new RolePermissionsResponse(roleId, _administratorPermissions));
         }
