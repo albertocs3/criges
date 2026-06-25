@@ -243,6 +243,9 @@
                                     <Button Content="Abrir Plataforma"
                                             Command="{Binding OpenPlatformCommand}"
                                             HorizontalAlignment="Left" />
+                                    <TextBlock Text="{Binding PlatformMessage}"
+                                               Foreground="#52616B"
+                                               Margin="0,12,0,0" />
                                 </StackPanel>
                             </Border>
                             <Border Background="White"

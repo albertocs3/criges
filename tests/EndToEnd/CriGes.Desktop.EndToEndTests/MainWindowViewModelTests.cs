@@ -120,6 +120,32 @@ public sealed class MainWindowViewModelTests
         Assert.Equal("Administrador", viewModel.CurrentUserDisplayName);
     }
 
+    [Fact]
+    public async Task OpenPlatformFailureKeepsShellHomeVisibleAndShowsMessage()
+    {
+        var apiClient = new ReadyInstallationApiClient
+        {
+            FailNextGetUsers = true
+        };
+        var viewModel = new MainWindowViewModel(
+            new DesktopSettings
+            {
+                Api = new DesktopSettings.ApiSettings { BaseUrl = "http://localhost:5099/" }
+            },
+            _ => apiClient);
+
+        await viewModel.CheckApiCommand.ExecuteAsync();
+        viewModel.LoginUserName = "admin";
+        viewModel.LoginPassword = "Password123!";
+        await viewModel.LoginCommand.ExecuteAsync();
+
+        await viewModel.OpenPlatformCommand.ExecuteAsync();
+
+        Assert.True(viewModel.IsShellHomeVisible);
+        Assert.False(viewModel.IsPlatformViewVisible);
+        Assert.Contains("No se pudo cargar Plataforma", viewModel.PlatformMessage);
+    }
+
     private sealed class ReadyInstallationApiClient : IInstallationApiClient
     {
         private readonly Guid _administratorRoleId = Guid.NewGuid();
@@ -132,6 +158,8 @@ public sealed class MainWindowViewModelTests
         public IReadOnlyList<string> LastUpdatedRolePermissions { get; private set; } = [];
 
         public bool FailNextLoginWithActiveSession { get; set; }
+
+        public bool FailNextGetUsers { get; set; }
 
         public int CloseDevelopmentActiveSessionsCalls { get; private set; }
 
@@ -277,6 +305,12 @@ public sealed class MainWindowViewModelTests
             string accessToken,
             CancellationToken cancellationToken = default)
         {
+            if (FailNextGetUsers)
+            {
+                FailNextGetUsers = false;
+                throw new HttpRequestException("Simulated users endpoint failure.");
+            }
+
             return Task.FromResult<IReadOnlyList<UserSummaryResponse>>(_users.ToArray());
         }
 
