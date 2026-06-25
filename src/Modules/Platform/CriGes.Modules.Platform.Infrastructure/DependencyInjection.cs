@@ -1,8 +1,10 @@
 using CriGes.Modules.Platform.Application.Auth;
+using CriGes.Modules.Platform.Application.Customers;
 using CriGes.Modules.Platform.Application.Administration;
 using CriGes.Modules.Platform.Application.Idempotency;
 using CriGes.Modules.Platform.Application.Initialization;
 using CriGes.Modules.Platform.Infrastructure.Auth;
+using CriGes.Modules.Platform.Infrastructure.Customers;
 using CriGes.Modules.Platform.Infrastructure.Administration;
 using CriGes.Modules.Platform.Infrastructure.Idempotency;
 using CriGes.Modules.Platform.Infrastructure.Initialization;
@@ -28,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IIdempotencyStore, EfIdempotencyStore>();
         services.AddScoped<IAuthSessionStore, EfAuthSessionStore>();
         services.AddScoped<IPlatformAdministrationStore, EfPlatformAdministrationStore>();
+        services.AddScoped<ICustomerStore, EfCustomerStore>();
         services.AddSingleton<IAuthSessionTokenGenerator, CryptoAuthSessionTokenGenerator>();
 
         return services;
@@ -40,6 +43,7 @@ public static class DependencyInjection
         services.AddSingleton<IIdempotencyStore, InMemoryIdempotencyStore>();
         services.AddSingleton<IAuthSessionStore, InMemoryAuthSessionStore>();
         services.AddSingleton<IPlatformAdministrationStore, InMemoryPlatformAdministrationStore>();
+        services.AddSingleton<ICustomerStore, InMemoryCustomerStore>();
         services.AddSingleton<IAuthSessionTokenGenerator, CryptoAuthSessionTokenGenerator>();
 
         return services;

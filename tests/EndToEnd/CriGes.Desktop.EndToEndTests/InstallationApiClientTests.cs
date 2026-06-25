@@ -4,6 +4,7 @@ using System.Text.Json;
 using CriGes.Desktop.Services.Api;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 
 namespace CriGes.Desktop.EndToEndTests;
@@ -457,6 +458,72 @@ public sealed class InstallationApiClientTests
 
         Assert.Equal("usuario", response.UserName);
         Assert.Equal("Administrador", response.Role.Name);
+    }
+
+    [Fact]
+    public async Task GetCustomersAsyncSendsBearerToken()
+    {
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Get, request.Method);
+            Assert.Equal("/api/v1/customers/", request.RequestUri?.AbsolutePath);
+            Assert.Equal("access-token", request.Headers.Authorization?.Parameter);
+
+            return JsonResponse<IReadOnlyList<CustomerSummaryResponse>>(
+            [
+                new CustomerSummaryResponse(
+                    Guid.NewGuid(),
+                    "Cliente",
+                    "B11111111",
+                    "cliente@example.com",
+                    "+34910000000",
+                    "active",
+                    DateTimeOffset.UtcNow)
+            ]);
+        }))
+        {
+            BaseAddress = new Uri("http://localhost:5099/")
+        };
+
+        var client = new InstallationApiClient(httpClient);
+
+        var response = await client.GetCustomersAsync("access-token");
+
+        Assert.Single(response);
+        Assert.Equal("Cliente", response[0].Name);
+    }
+
+    [Fact]
+    public async Task CreateCustomerAsyncSendsBearerTokenAndReturnsCustomer()
+    {
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/customers/", request.RequestUri?.AbsolutePath);
+            Assert.Equal("access-token", request.Headers.Authorization?.Parameter);
+
+            return JsonResponse(
+                new CustomerSummaryResponse(
+                    Guid.NewGuid(),
+                    "Cliente Nuevo",
+                    "B11111111",
+                    "cliente@example.com",
+                    "+34910000000",
+                    "active",
+                    DateTimeOffset.UtcNow),
+                HttpStatusCode.Created);
+        }))
+        {
+            BaseAddress = new Uri("http://localhost:5099/")
+        };
+
+        var client = new InstallationApiClient(httpClient);
+
+        var response = await client.CreateCustomerAsync(
+            "access-token",
+            new CreateCustomerRequest("Cliente Nuevo", "B11111111", "cliente@example.com", "+34910000000"));
+
+        Assert.Equal("Cliente Nuevo", response.Name);
     }
 
     private static HttpResponseMessage JsonResponse<T>(T body, HttpStatusCode statusCode = HttpStatusCode.OK)

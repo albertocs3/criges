@@ -13,6 +13,8 @@ public static class PlatformPermissionNames
     public const string ViewSessions = "Platform.ViewSessions";
     public const string CloseSessions = "Platform.CloseSessions";
     public const string UseAttachments = "Platform.UseAttachments";
+    public const string ViewCustomers = "Customers.View";
+    public const string ManageCustomers = "Customers.Manage";
 
     public static readonly IReadOnlyList<string> All =
     [
@@ -26,6 +28,8 @@ public static class PlatformPermissionNames
         RestoreBackups,
         ViewSessions,
         CloseSessions,
-        UseAttachments
+        UseAttachments,
+        ViewCustomers,
+        ManageCustomers
     ];
 }

@@ -19,6 +19,8 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
 
     public DbSet<CompanyEntity> Companies => Set<CompanyEntity>();
 
+    public DbSet<CustomerEntity> Customers => Set<CustomerEntity>();
+
     public DbSet<ConfigurationVersionEntity> ConfigurationVersions => Set<ConfigurationVersionEntity>();
 
     public DbSet<NumberCounterEntity> NumberCounters => Set<NumberCounterEntity>();
@@ -40,6 +42,7 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         ConfigureUserSessions(modelBuilder);
         ConfigureReservedUserNames(modelBuilder);
         ConfigureCompanies(modelBuilder);
+        ConfigureCustomers(modelBuilder);
         ConfigureConfigurationVersions(modelBuilder);
         ConfigureNumberCounters(modelBuilder);
         ConfigureAuditEvents(modelBuilder);
@@ -183,6 +186,29 @@ public sealed class PlatformDbContext(DbContextOptions<PlatformDbContext> option
         entity.Property(value => value.RowVersion).IsRowVersion();
         entity.HasIndex(value => value.SingletonKey).IsUnique().HasDatabaseName("UX_Companies_SingletonKey");
         entity.ToTable(table => table.HasCheckConstraint("CK_Companies_SingletonKey", "[SingletonKey] = 1"));
+    }
+
+    private static void ConfigureCustomers(ModelBuilder modelBuilder)
+    {
+        var entity = modelBuilder.Entity<CustomerEntity>();
+        entity.ToTable("Customers", "operations");
+        entity.HasKey(value => value.CustomerId).HasName("PK_Customers");
+        entity.Property(value => value.Name).HasMaxLength(200);
+        entity.Property(value => value.NormalizedName).HasMaxLength(200);
+        entity.Property(value => value.TaxId).HasMaxLength(32);
+        entity.Property(value => value.NormalizedTaxId).HasMaxLength(32);
+        entity.Property(value => value.Email).HasMaxLength(320);
+        entity.Property(value => value.Phone).HasMaxLength(50);
+        entity.Property(value => value.CreatedAtUtc).HasPrecision(3);
+        entity.Property(value => value.ModifiedAtUtc).HasPrecision(3);
+        entity.Property(value => value.RowVersion).IsRowVersion();
+        entity.HasIndex(value => value.NormalizedName).HasDatabaseName("IX_Customers_NormalizedName");
+        entity.HasIndex(value => value.NormalizedTaxId)
+            .IsUnique()
+            .HasFilter("[NormalizedTaxId] IS NOT NULL")
+            .HasDatabaseName("UX_Customers_NormalizedTaxId");
+        entity.HasIndex(value => value.Status).HasDatabaseName("IX_Customers_Status");
+        entity.ToTable(table => table.HasCheckConstraint("CK_Customers_Status", "[Status] IN (1, 2)"));
     }
 
     private static void ConfigureConfigurationVersions(ModelBuilder modelBuilder)

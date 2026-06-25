@@ -24,6 +24,7 @@ public static class ApiProblemResults
             "PLATFORM.ALREADY_INITIALIZED" => StatusCodes.Status409Conflict,
             "SECURITY.USERNAME_ALREADY_RESERVED" => StatusCodes.Status409Conflict,
             "SECURITY.ROLENAME_ALREADY_RESERVED" => StatusCodes.Status409Conflict,
+            "CUSTOMERS.TAXID_ALREADY_EXISTS" => StatusCodes.Status409Conflict,
             "IDEMPOTENCY.KEY_REUSED_WITH_DIFFERENT_REQUEST" => StatusCodes.Status409Conflict,
             "IDEMPOTENCY.REQUEST_IN_PROGRESS" => StatusCodes.Status409Conflict,
             "PLATFORM.INVALID_TAX_ID" => StatusCodes.Status422UnprocessableEntity,
@@ -32,6 +33,7 @@ public static class ApiProblemResults
             "SECURITY.ROLE_NOT_FOUND" => StatusCodes.Status422UnprocessableEntity,
             "SECURITY.UNKNOWN_PERMISSION" => StatusCodes.Status422UnprocessableEntity,
             "PLATFORM.VALIDATION_FAILED" => StatusCodes.Status422UnprocessableEntity,
+            "CUSTOMERS.VALIDATION_FAILED" => StatusCodes.Status422UnprocessableEntity,
             "AUTH.VALIDATION_FAILED" => StatusCodes.Status422UnprocessableEntity,
             "IDEMPOTENCY.KEY_REQUIRED" => StatusCodes.Status422UnprocessableEntity,
             _ => StatusCodes.Status500InternalServerError

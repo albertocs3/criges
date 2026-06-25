@@ -18,7 +18,9 @@ public static class RolePermissionCatalog
 
     private static readonly IReadOnlyList<string> BillingPermissions =
     [
-        PlatformPermissionNames.UseAttachments
+        PlatformPermissionNames.UseAttachments,
+        PlatformPermissionNames.ViewCustomers,
+        PlatformPermissionNames.ManageCustomers
     ];
 
     private static readonly IReadOnlyList<string> AccountingPermissions =

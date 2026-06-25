@@ -1,5 +1,6 @@
 using CriGes.Modules.Platform.Application.Administration;
 using CriGes.Modules.Platform.Application.Auth;
+using CriGes.Modules.Platform.Application.Customers;
 using CriGes.Modules.Platform.Application.Initialization;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,8 @@ public static class DependencyInjection
         services.AddScoped<UpdateRolePermissionsHandler>();
         services.AddScoped<CreateRoleHandler>();
         services.AddScoped<CreateUserHandler>();
+        services.AddScoped<ListCustomersHandler>();
+        services.AddScoped<CreateCustomerHandler>();
         services.AddScoped<AuthSessionContext>();
         services.AddScoped<IAuthSessionContext>(provider => provider.GetRequiredService<AuthSessionContext>());
 

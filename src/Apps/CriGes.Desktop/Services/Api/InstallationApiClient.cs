@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 
 namespace CriGes.Desktop.Services.Api;
@@ -406,6 +407,56 @@ public sealed class InstallationApiClient : IInstallationApiClient
             HttpStatusCode.InternalServerError,
             "Respuesta vacia",
             "La API no devolvio el usuario creado.");
+    }
+
+    public async Task<IReadOnlyList<CustomerSummaryResponse>> GetCustomersAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, "api/v1/customers/");
+        AddBearer(httpRequest, accessToken);
+
+        using var response = await _httpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await InstallationApiException.FromResponseAsync(response, cancellationToken).ConfigureAwait(false);
+        }
+
+        var result = await response.Content
+            .ReadFromJsonAsync<IReadOnlyList<CustomerSummaryResponse>>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result ?? throw new InstallationApiException(
+            HttpStatusCode.InternalServerError,
+            "Respuesta vacia",
+            "La API no devolvio clientes.");
+    }
+
+    public async Task<CustomerSummaryResponse> CreateCustomerAsync(
+        string accessToken,
+        CreateCustomerRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/customers/")
+        {
+            Content = JsonContent.Create(request, options: JsonOptions)
+        };
+        AddBearer(httpRequest, accessToken);
+
+        using var response = await _httpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await InstallationApiException.FromResponseAsync(response, cancellationToken).ConfigureAwait(false);
+        }
+
+        var result = await response.Content
+            .ReadFromJsonAsync<CustomerSummaryResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result ?? throw new InstallationApiException(
+            HttpStatusCode.InternalServerError,
+            "Respuesta vacia",
+            "La API no devolvio el cliente creado.");
     }
 
     private static void AddBearer(HttpRequestMessage request, string accessToken)

@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 using CriGes.Modules.Platform.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
@@ -31,7 +32,8 @@ public sealed class PlatformInitializationSqlIntegrationTests
                 "202606240003_AddUserSessions",
                 "202606240004_AddRolePermissions",
                 "202606240005_AddUserPhone",
-                "202606240006_SeedCurrentBaseRolePermissions"
+                "202606240006_SeedCurrentBaseRolePermissions",
+                "202606240007_AddCustomers"
             ],
             migrations);
     }
@@ -66,7 +68,7 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.Equal(4, await dbContext.Roles.CountAsync(role => role.IsProtected));
             Assert.Equal(1, await dbContext.Users.CountAsync(user => user.NormalizedUserName == "ADMIN"));
             Assert.Equal(1, await dbContext.Users.CountAsync(user => user.NormalizedUserName == "SISTEMA"));
-            Assert.Equal(15, await dbContext.RolePermissions.CountAsync());
+            Assert.Equal(19, await dbContext.RolePermissions.CountAsync());
             Assert.True(await dbContext.RolePermissions.AnyAsync(permission => permission.Permission == PlatformPermissionNames.ManageUsers));
             Assert.Equal(1, await dbContext.Companies.CountAsync());
             Assert.True(await dbContext.NumberCounters.AnyAsync());
@@ -227,6 +229,11 @@ public sealed class PlatformInitializationSqlIntegrationTests
                 "/api/v1/platform/users",
                 new CreateUserRequest("Usuario SQL", "usuario-sql", "+34919999999", administratorRoleId, "StrongPassword1!"));
             var createdUser = await createUser.Content.ReadFromJsonAsync<UserSummaryResponse>();
+            var createCustomer = await client.PostAsJsonAsync(
+                "/api/v1/customers/",
+                new CreateCustomerRequest("Cliente SQL", "B22222222", "cliente-sql@example.com", "+34912222222"));
+            var createdCustomer = await createCustomer.Content.ReadFromJsonAsync<CustomerSummaryResponse>();
+            var customers = await client.GetFromJsonAsync<IReadOnlyList<CustomerSummaryResponse>>("/api/v1/customers/");
             var users = await client.GetFromJsonAsync<IReadOnlyList<UserSummaryResponse>>("/api/v1/platform/users");
             var auditEvents = await client.GetFromJsonAsync<IReadOnlyList<AuditEventResponse>>("/api/v1/platform/audit-events?take=10");
             var logout = await client.PostAsync("/api/v1/platform/auth/logout", null);
@@ -253,6 +260,11 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.Equal(HttpStatusCode.Created, createUser.StatusCode);
             Assert.NotNull(createdUser);
             Assert.Equal("usuario-sql", createdUser.UserName);
+            Assert.Equal(HttpStatusCode.Created, createCustomer.StatusCode);
+            Assert.NotNull(createdCustomer);
+            Assert.Equal("Cliente SQL", createdCustomer.Name);
+            Assert.NotNull(customers);
+            Assert.Contains(customers, customer => customer.Name == "Cliente SQL");
             Assert.NotNull(users);
             Assert.Contains(users, user => user.UserName == "admin");
             Assert.Contains(users, user => user.UserName == "Sistema");
@@ -261,6 +273,7 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.Contains(auditEvents, audit => audit.Action == "UserCreated" && audit.EntityId == createdUser.Id.ToString("D"));
             Assert.Contains(auditEvents, audit => audit.Action == "RolePermissionsUpdated" && audit.EntityId == billingRoleId.ToString("D"));
             Assert.Contains(auditEvents, audit => audit.Action == "RoleCreated" && audit.EntityId == createdRole.Id.ToString("D"));
+            Assert.Contains(auditEvents, audit => audit.Action == "CustomerCreated" && audit.EntityId == createdCustomer.Id.ToString("D"));
             Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
             Assert.Equal(1, await dbContext.UserSessions.CountAsync());
             Assert.Equal(1, await dbContext.UserSessions.CountAsync(value => value.Status == 2 && value.ClosedAtUtc != null));
@@ -274,12 +287,21 @@ public sealed class PlatformInitializationSqlIntegrationTests
             Assert.True(await dbContext.RolePermissions.AnyAsync(permission =>
                 permission.RoleId == billingRoleId &&
                 permission.Permission == PlatformPermissionNames.ViewAudit));
+            Assert.True(await dbContext.Customers.AnyAsync(customer =>
+                customer.NormalizedTaxId == "B22222222" &&
+                customer.Name == "Cliente SQL"));
             Assert.True(await dbContext.AuditEvents.AnyAsync(audit =>
                 audit.Action == "UserCreated" &&
                 audit.ActorUserId == session.User.Id &&
                 audit.EntityId == createdUser.Id.ToString("D") &&
                 audit.NewValuesJson != null &&
                 audit.NewValuesJson.Contains("usuario-sql")));
+            Assert.True(await dbContext.AuditEvents.AnyAsync(audit =>
+                audit.Action == "CustomerCreated" &&
+                audit.ActorUserId == session.User.Id &&
+                audit.EntityId == createdCustomer.Id.ToString("D") &&
+                audit.NewValuesJson != null &&
+                audit.NewValuesJson.Contains("Cliente SQL")));
             Assert.True(await dbContext.AuditEvents.AnyAsync(audit =>
                 audit.Action == "RolePermissionsUpdated" &&
                 audit.ActorUserId == session.User.Id &&

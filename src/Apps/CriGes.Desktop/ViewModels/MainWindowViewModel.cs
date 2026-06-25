@@ -7,6 +7,7 @@ using CriGes.Desktop.Services.Api;
 using CriGes.Desktop.Services.Session;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 
 namespace CriGes.Desktop.ViewModels;
@@ -31,6 +32,11 @@ public sealed class MainWindowViewModel : ObservableObject
     private string _newUserPassword = string.Empty;
     private string _newUserPasswordConfirmation = string.Empty;
     private string _newRoleName = string.Empty;
+    private string _customerMessage = string.Empty;
+    private string _newCustomerName = string.Empty;
+    private string _newCustomerTaxId = string.Empty;
+    private string _newCustomerEmail = string.Empty;
+    private string _newCustomerPhone = string.Empty;
     private string _rolePermissionsMessage = string.Empty;
     private string _auditMessage = string.Empty;
     private string _serverVersion = "desconocida";
@@ -57,6 +63,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private bool _isShellVisible;
     private bool _isShellHomeVisible;
     private bool _isPlatformViewVisible;
+    private bool _isCustomersViewVisible;
     private bool _canShowPlatformModule;
     private bool _canShowOperationsModule;
     private bool _canShowDiagnosticsModule;
@@ -66,6 +73,7 @@ public sealed class MainWindowViewModel : ObservableObject
     private IReadOnlyList<UserSummaryResponse> _platformUsers = [];
     private IReadOnlyList<AuditEventResponse> _platformAuditEvents = [];
     private IReadOnlyList<PermissionResponse> _platformPermissions = [];
+    private IReadOnlyList<CustomerSummaryResponse> _customers = [];
     private IReadOnlyList<RolePermissionOptionViewModel> _rolePermissionOptions = [];
     private ApiConnectionState _connectionState;
 
@@ -89,9 +97,11 @@ public sealed class MainWindowViewModel : ObservableObject
         LogoutCommand = new AsyncRelayCommand(LogoutAsync, () => !IsBusy && IsShellVisible);
         RefreshSessionCommand = new AsyncRelayCommand(RefreshSessionAsync, () => !IsBusy && _session.IsAuthenticated);
         OpenPlatformCommand = new AsyncRelayCommand(OpenPlatformAsync, () => !IsBusy && IsShellVisible && CanShowPlatformModule);
-        BackToShellCommand = new AsyncRelayCommand(BackToShellAsync, () => !IsBusy && IsPlatformViewVisible);
+        OpenCustomersCommand = new AsyncRelayCommand(OpenCustomersAsync, () => !IsBusy && IsShellVisible && CanShowOperationsModule);
+        BackToShellCommand = new AsyncRelayCommand(BackToShellAsync, () => !IsBusy && (IsPlatformViewVisible || IsCustomersViewVisible));
         CreateRoleCommand = new AsyncRelayCommand(CreateRoleAsync, CanCreateRole);
         CreateUserCommand = new AsyncRelayCommand(CreateUserAsync, CanCreateUser);
+        CreateCustomerCommand = new AsyncRelayCommand(CreateCustomerAsync, CanCreateCustomer);
         SaveRolePermissionsCommand = new AsyncRelayCommand(SaveRolePermissionsAsync, CanSaveRolePermissions);
         RefreshAuditCommand = new AsyncRelayCommand(RefreshAuditAsync, CanRefreshAudit);
     }
@@ -108,11 +118,15 @@ public sealed class MainWindowViewModel : ObservableObject
 
     public AsyncRelayCommand OpenPlatformCommand { get; }
 
+    public AsyncRelayCommand OpenCustomersCommand { get; }
+
     public AsyncRelayCommand BackToShellCommand { get; }
 
     public AsyncRelayCommand CreateRoleCommand { get; }
 
     public AsyncRelayCommand CreateUserCommand { get; }
+
+    public AsyncRelayCommand CreateCustomerCommand { get; }
 
     public AsyncRelayCommand SaveRolePermissionsCommand { get; }
 
@@ -232,6 +246,12 @@ public sealed class MainWindowViewModel : ObservableObject
         private set => SetProperty(ref _isPlatformViewVisible, value);
     }
 
+    public bool IsCustomersViewVisible
+    {
+        get => _isCustomersViewVisible;
+        private set => SetProperty(ref _isCustomersViewVisible, value);
+    }
+
     public bool CanShowPlatformModule
     {
         get => _canShowPlatformModule;
@@ -286,6 +306,12 @@ public sealed class MainWindowViewModel : ObservableObject
         private set => SetProperty(ref _platformPermissions, value);
     }
 
+    public IReadOnlyList<CustomerSummaryResponse> Customers
+    {
+        get => _customers;
+        private set => SetProperty(ref _customers, value);
+    }
+
     public IReadOnlyList<RolePermissionOptionViewModel> RolePermissionOptions
     {
         get => _rolePermissionOptions;
@@ -308,6 +334,12 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _platformMessage;
         private set => SetProperty(ref _platformMessage, value);
+    }
+
+    public string CustomerMessage
+    {
+        get => _customerMessage;
+        private set => SetProperty(ref _customerMessage, value);
     }
 
     public string NewUserFullName
@@ -344,6 +376,30 @@ public sealed class MainWindowViewModel : ObservableObject
     {
         get => _newRoleName;
         set => SetCreateRoleProperty(ref _newRoleName, value);
+    }
+
+    public string NewCustomerName
+    {
+        get => _newCustomerName;
+        set => SetCreateCustomerProperty(ref _newCustomerName, value);
+    }
+
+    public string NewCustomerTaxId
+    {
+        get => _newCustomerTaxId;
+        set => SetCreateCustomerProperty(ref _newCustomerTaxId, value);
+    }
+
+    public string NewCustomerEmail
+    {
+        get => _newCustomerEmail;
+        set => SetCreateCustomerProperty(ref _newCustomerEmail, value);
+    }
+
+    public string NewCustomerPhone
+    {
+        get => _newCustomerPhone;
+        set => SetCreateCustomerProperty(ref _newCustomerPhone, value);
     }
 
     public Guid NewUserRoleId
@@ -481,6 +537,7 @@ public sealed class MainWindowViewModel : ObservableObject
             IsShellVisible = false;
             IsShellHomeVisible = false;
             IsPlatformViewVisible = false;
+            IsCustomersViewVisible = false;
             ServerVersion = status.ProductVersion;
             ConnectionState = status.RequiresInitialization
                 ? ApiConnectionState.PlatformNotInitialized
@@ -498,6 +555,7 @@ public sealed class MainWindowViewModel : ObservableObject
             IsShellVisible = false;
             IsShellHomeVisible = false;
             IsPlatformViewVisible = false;
+            IsCustomersViewVisible = false;
             ConnectionState = ApiConnectionState.ApiUnavailable;
             StatusText = $"No se pudo comprobar la API: {ex.Message}";
         }
@@ -535,6 +593,7 @@ public sealed class MainWindowViewModel : ObservableObject
             IsShellVisible = false;
             IsShellHomeVisible = false;
             IsPlatformViewVisible = false;
+            IsCustomersViewVisible = false;
             ConnectionState = ApiConnectionState.Ready;
             AdminPassword = string.Empty;
             AdminPasswordConfirmation = string.Empty;
@@ -600,6 +659,7 @@ public sealed class MainWindowViewModel : ObservableObject
             IsShellVisible = true;
             IsShellHomeVisible = true;
             IsPlatformViewVisible = false;
+            IsCustomersViewVisible = false;
             CurrentUserDisplayName = currentUser.DisplayName;
             CurrentUserRole = currentUser.Role.Name;
             ApplyPermissions(currentUser.Permissions);
@@ -699,6 +759,7 @@ public sealed class MainWindowViewModel : ObservableObject
             RebuildRolePermissionOptions();
             IsShellHomeVisible = false;
             IsPlatformViewVisible = true;
+            IsCustomersViewVisible = false;
             PlatformMessage = $"Usuarios: {users.Count}. Roles: {roles.Count}. Permisos: {permissions.Count}.";
             RolePermissionsMessage = string.Empty;
             AuditMessage = PlatformAuditEvents.Count == 0 ? "Sin eventos recientes." : string.Empty;
@@ -714,6 +775,46 @@ public sealed class MainWindowViewModel : ObservableObject
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
         {
             PlatformMessage = $"No se pudo cargar Plataforma: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        }
+    }
+
+    private async Task OpenCustomersAsync(CancellationToken cancellationToken)
+    {
+        if (!CanShowOperationsModule)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        CustomerMessage = "Cargando clientes...";
+
+        try
+        {
+            await EnsureFreshAccessTokenAsync(cancellationToken).ConfigureAwait(true);
+            Customers = await _apiClientFactory(ApiBaseUrl)
+                .GetCustomersAsync(_session.AccessToken, cancellationToken)
+                .ConfigureAwait(true);
+            IsShellHomeVisible = false;
+            IsPlatformViewVisible = false;
+            IsCustomersViewVisible = true;
+            CustomerMessage = Customers.Count == 0 ? "Sin clientes." : $"Clientes: {Customers.Count}.";
+        }
+        catch (InstallationApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            HandleSessionLost("Sesion caducada. Vuelve a iniciar sesion.");
+        }
+        catch (InstallationApiException ex)
+        {
+            CustomerMessage = $"{(int)ex.StatusCode} - {ex.Message}";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
+        {
+            CustomerMessage = $"No se pudieron cargar clientes: {ex.Message}";
         }
         finally
         {
@@ -810,8 +911,10 @@ public sealed class MainWindowViewModel : ObservableObject
     private Task BackToShellAsync(CancellationToken cancellationToken)
     {
         IsPlatformViewVisible = false;
+        IsCustomersViewVisible = false;
         IsShellHomeVisible = true;
         PlatformMessage = string.Empty;
+        CustomerMessage = string.Empty;
         RaiseCommandStates();
         return Task.CompletedTask;
     }
@@ -914,6 +1017,49 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private async Task CreateCustomerAsync(CancellationToken cancellationToken)
+    {
+        IsBusy = true;
+        CustomerMessage = "Creando cliente...";
+
+        try
+        {
+            await EnsureFreshAccessTokenAsync(cancellationToken).ConfigureAwait(true);
+            var customer = await _apiClientFactory(ApiBaseUrl)
+                .CreateCustomerAsync(
+                    _session.AccessToken,
+                    new CreateCustomerRequest(NewCustomerName, NewCustomerTaxId, NewCustomerEmail, NewCustomerPhone),
+                    cancellationToken)
+                .ConfigureAwait(true);
+
+            NewCustomerName = string.Empty;
+            NewCustomerTaxId = string.Empty;
+            NewCustomerEmail = string.Empty;
+            NewCustomerPhone = string.Empty;
+            Customers = await _apiClientFactory(ApiBaseUrl)
+                .GetCustomersAsync(_session.AccessToken, cancellationToken)
+                .ConfigureAwait(true);
+            CustomerMessage = $"Cliente creado: {customer.Name}.";
+        }
+        catch (InstallationApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
+        {
+            HandleSessionLost("Sesion caducada. Vuelve a iniciar sesion.");
+        }
+        catch (InstallationApiException ex)
+        {
+            CustomerMessage = $"{(int)ex.StatusCode} - {ex.Message}";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
+        {
+            CustomerMessage = $"No se pudo crear el cliente: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+            RaiseCommandStates();
+        }
+    }
+
     private async Task LogoutAsync(CancellationToken cancellationToken)
     {
         IsBusy = true;
@@ -981,6 +1127,7 @@ public sealed class MainWindowViewModel : ObservableObject
         IsShellVisible = false;
         IsShellHomeVisible = false;
         IsPlatformViewVisible = false;
+        IsCustomersViewVisible = false;
         IsLoginVisible = true;
         CurrentUserDisplayName = string.Empty;
         CurrentUserRole = string.Empty;
@@ -988,10 +1135,12 @@ public sealed class MainWindowViewModel : ObservableObject
         PlatformUsers = [];
         PlatformAuditEvents = [];
         PlatformPermissions = [];
+        Customers = [];
         RolePermissionOptions = [];
         PlatformMessage = string.Empty;
         RolePermissionsMessage = string.Empty;
         AuditMessage = string.Empty;
+        CustomerMessage = string.Empty;
         NewUserRoleId = Guid.Empty;
         SelectedPlatformRoleId = Guid.Empty;
         ApplyPermissions([]);
@@ -1009,7 +1158,10 @@ public sealed class MainWindowViewModel : ObservableObject
             permissions.Contains(PlatformPermissionNames.ViewAudit) ||
             permissions.Contains(PlatformPermissionNames.ViewSessions);
         CanShowDiagnosticsModule = permissions.Contains(PlatformPermissionNames.ViewDiagnostics);
-        CanShowOperationsModule = permissions.Contains(PlatformPermissionNames.UseAttachments);
+        CanShowOperationsModule =
+            permissions.Contains(PlatformPermissionNames.UseAttachments) ||
+            permissions.Contains(PlatformPermissionNames.ViewCustomers) ||
+            permissions.Contains(PlatformPermissionNames.ManageCustomers);
     }
 
     private bool CanInitialize()
@@ -1056,6 +1208,14 @@ public sealed class MainWindowViewModel : ObservableObject
             HasValue(NewRoleName);
     }
 
+    private bool CanCreateCustomer()
+    {
+        return !IsBusy &&
+            IsCustomersViewVisible &&
+            _session.Permissions.Contains(PlatformPermissionNames.ManageCustomers) &&
+            HasValue(NewCustomerName);
+    }
+
     private bool CanSaveRolePermissions()
     {
         return !IsBusy &&
@@ -1081,6 +1241,7 @@ public sealed class MainWindowViewModel : ObservableObject
         IsShellVisible = false;
         IsShellHomeVisible = false;
         IsPlatformViewVisible = false;
+        IsCustomersViewVisible = false;
         ConnectionState = readiness.Status switch
         {
             "databaseNotMigrated" => ApiConnectionState.DatabaseNotMigrated,
@@ -1135,6 +1296,14 @@ public sealed class MainWindowViewModel : ObservableObject
         }
     }
 
+    private void SetCreateCustomerProperty(ref string field, string value, [CallerMemberName] string? propertyName = null)
+    {
+        if (SetProperty(ref field, value, propertyName))
+        {
+            CreateCustomerCommand.RaiseCanExecuteChanged();
+        }
+    }
+
     private void RaiseCommandStates()
     {
         CheckApiCommand.RaiseCanExecuteChanged();
@@ -1143,9 +1312,11 @@ public sealed class MainWindowViewModel : ObservableObject
         LogoutCommand.RaiseCanExecuteChanged();
         RefreshSessionCommand.RaiseCanExecuteChanged();
         OpenPlatformCommand.RaiseCanExecuteChanged();
+        OpenCustomersCommand.RaiseCanExecuteChanged();
         BackToShellCommand.RaiseCanExecuteChanged();
         CreateRoleCommand.RaiseCanExecuteChanged();
         CreateUserCommand.RaiseCanExecuteChanged();
+        CreateCustomerCommand.RaiseCanExecuteChanged();
         SaveRolePermissionsCommand.RaiseCanExecuteChanged();
         RefreshAuditCommand.RaiseCanExecuteChanged();
     }

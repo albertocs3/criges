@@ -5,6 +5,7 @@ using System.Text.Json;
 using CriGes.Modules.Platform.Application.Initialization;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 using CriGes.Modules.Platform.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
@@ -189,6 +190,39 @@ public sealed class PlatformAdministrationEndpointTests
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         Assert.NotNull(auditEvents);
         Assert.Contains(auditEvents, audit => audit.Action == "UserCreated" && audit.EntityType == "User");
+    }
+
+    [Fact]
+    public async Task CustomersRequirePermissionAndCanBeCreatedAndListed()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+
+        var anonymous = await client.GetAsync("/api/v1/customers/");
+        var anonymousProblem = await anonymous.Content.ReadFromJsonAsync<JsonElement>();
+
+        await InitializeAndLoginAsAdminAsync(client);
+
+        var created = await client.PostAsJsonAsync(
+            "/api/v1/customers/",
+            new CreateCustomerRequest("Cliente Contrato", "B11111111", "cliente@example.com", "+34910000000"));
+        var body = await created.Content.ReadFromJsonAsync<CustomerSummaryResponse>();
+        var duplicate = await client.PostAsJsonAsync(
+            "/api/v1/customers/",
+            new CreateCustomerRequest("Cliente Duplicado", "b11111111", null, null));
+        var duplicateProblem = await duplicate.Content.ReadFromJsonAsync<JsonElement>();
+        var customers = await client.GetFromJsonAsync<IReadOnlyList<CustomerSummaryResponse>>("/api/v1/customers/");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        Assert.Equal("AUTH.INVALID_TOKEN", anonymousProblem.GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.NotNull(body);
+        Assert.Equal("Cliente Contrato", body.Name);
+        Assert.Equal("active", body.Status);
+        Assert.Equal(HttpStatusCode.Conflict, duplicate.StatusCode);
+        Assert.Equal("CUSTOMERS.TAXID_ALREADY_EXISTS", duplicateProblem.GetProperty("code").GetString());
+        Assert.NotNull(customers);
+        Assert.Contains(customers, customer => customer.Name == "Cliente Contrato");
     }
 
     private static async Task InitializeAndLoginAsAdminAsync(HttpClient client)

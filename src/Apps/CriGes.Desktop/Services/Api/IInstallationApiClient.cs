@@ -1,5 +1,6 @@
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 
 namespace CriGes.Desktop.Services.Api;
@@ -70,5 +71,14 @@ public interface IInstallationApiClient
     Task<UserSummaryResponse> CreateUserAsync(
         string accessToken,
         CreateUserRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<CustomerSummaryResponse>> GetCustomersAsync(
+        string accessToken,
+        CancellationToken cancellationToken = default);
+
+    Task<CustomerSummaryResponse> CreateCustomerAsync(
+        string accessToken,
+        CreateCustomerRequest request,
         CancellationToken cancellationToken = default);
 }

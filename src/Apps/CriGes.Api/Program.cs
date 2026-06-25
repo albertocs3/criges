@@ -5,6 +5,7 @@ using CriGes.Infrastructure;
 using CriGes.Modules.Platform.Api;
 using CriGes.Modules.Platform.Api.Administration;
 using CriGes.Modules.Platform.Api.Auth;
+using CriGes.Modules.Platform.Api.Customers;
 using CriGes.Modules.Platform.Api.Installation;
 using CriGes.Modules.Platform.Application;
 using CriGes.Modules.Platform.Infrastructure;
@@ -44,6 +45,7 @@ app.MapGet("/", () => Results.Ok(new { Name = "CriGes.Api", Status = "running" }
 app.MapPlatformAuthEndpoints();
 app.MapPlatformPermissionEndpoints();
 app.MapPlatformAdministrationEndpoints();
+app.MapCustomerEndpoints();
 app.MapPlatformEndpoints();
 if (app.Environment.IsDevelopment())
 {

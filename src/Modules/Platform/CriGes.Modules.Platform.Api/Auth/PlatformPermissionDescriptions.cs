@@ -16,6 +16,8 @@ internal static class PlatformPermissionDescriptions
         new(PlatformPermissionNames.RestoreBackups, "Restaurar copias"),
         new(PlatformPermissionNames.ViewSessions, "Consultar sesiones"),
         new(PlatformPermissionNames.CloseSessions, "Cerrar sesiones"),
-        new(PlatformPermissionNames.UseAttachments, "Usar adjuntos")
+        new(PlatformPermissionNames.UseAttachments, "Usar adjuntos"),
+        new(PlatformPermissionNames.ViewCustomers, "Consultar clientes"),
+        new(PlatformPermissionNames.ManageCustomers, "Crear y modificar clientes")
     ];
 }

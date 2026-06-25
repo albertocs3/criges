@@ -5,6 +5,7 @@ using CriGes.Desktop.Services.Api;
 using CriGes.Desktop.ViewModels;
 using CriGes.Modules.Platform.Contracts.Administration;
 using CriGes.Modules.Platform.Contracts.Auth;
+using CriGes.Modules.Platform.Contracts.Customers;
 using CriGes.Modules.Platform.Contracts.Installation;
 
 namespace CriGes.Desktop.EndToEndTests;
@@ -198,17 +199,65 @@ public sealed class MainWindowViewModelTests
         Assert.False(viewModel.OpenPlatformCommand.CanExecute(null));
     }
 
+    [Fact]
+    public async Task CustomersModuleListsAndCreatesCustomersWhenUserHasPermission()
+    {
+        var apiClient = new ReadyInstallationApiClient
+        {
+            CurrentUserPermissions =
+            [
+                PlatformPermissionNames.ViewCustomers,
+                PlatformPermissionNames.ManageCustomers
+            ]
+        };
+        var viewModel = new MainWindowViewModel(
+            new DesktopSettings
+            {
+                Api = new DesktopSettings.ApiSettings { BaseUrl = "http://localhost:5099/" }
+            },
+            _ => apiClient);
+
+        await viewModel.CheckApiCommand.ExecuteAsync();
+        viewModel.LoginUserName = "facturacion";
+        viewModel.LoginPassword = "Password123!";
+        await viewModel.LoginCommand.ExecuteAsync();
+
+        Assert.True(viewModel.CanShowOperationsModule);
+        Assert.True(viewModel.OpenCustomersCommand.CanExecute(null));
+
+        await viewModel.OpenCustomersCommand.ExecuteAsync();
+
+        Assert.True(viewModel.IsCustomersViewVisible);
+        Assert.False(viewModel.IsShellHomeVisible);
+
+        viewModel.NewCustomerName = "Cliente Desktop";
+        viewModel.NewCustomerTaxId = "B11111111";
+        viewModel.NewCustomerEmail = "cliente@example.com";
+        viewModel.NewCustomerPhone = "+34910000000";
+
+        Assert.True(viewModel.CreateCustomerCommand.CanExecute(null));
+
+        await viewModel.CreateCustomerCommand.ExecuteAsync();
+
+        Assert.Equal("Cliente Desktop", apiClient.LastCreateCustomerRequest?.Name);
+        Assert.Contains(viewModel.Customers, customer => customer.Name == "Cliente Desktop");
+        Assert.Contains("Cliente creado", viewModel.CustomerMessage);
+    }
+
     private sealed class ReadyInstallationApiClient : IInstallationApiClient
     {
         private readonly Guid _administratorRoleId = Guid.NewGuid();
         private readonly List<RoleSummaryResponse> _roles = [];
         private readonly List<UserSummaryResponse> _users = [];
+        private readonly List<CustomerSummaryResponse> _customers = [];
         private readonly List<AuditEventResponse> _auditEvents = [];
         private readonly Dictionary<Guid, IReadOnlyList<string>> _rolePermissions = [];
 
         public CreateUserRequest? LastCreateUserRequest { get; private set; }
 
         public CreateRoleRequest? LastCreateRoleRequest { get; private set; }
+
+        public CreateCustomerRequest? LastCreateCustomerRequest { get; private set; }
 
         public IReadOnlyList<string> LastUpdatedRolePermissions { get; private set; } = [];
 
@@ -464,6 +513,32 @@ public sealed class MainWindowViewModelTests
                 "success"));
 
             return Task.FromResult(user);
+        }
+
+        public Task<IReadOnlyList<CustomerSummaryResponse>> GetCustomersAsync(
+            string accessToken,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<IReadOnlyList<CustomerSummaryResponse>>(_customers.ToArray());
+        }
+
+        public Task<CustomerSummaryResponse> CreateCustomerAsync(
+            string accessToken,
+            CreateCustomerRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastCreateCustomerRequest = request;
+            var customer = new CustomerSummaryResponse(
+                Guid.NewGuid(),
+                request.Name ?? string.Empty,
+                request.TaxId,
+                request.Email,
+                request.Phone,
+                "active",
+                DateTimeOffset.UtcNow);
+            _customers.Add(customer);
+
+            return Task.FromResult(customer);
         }
 
         private static SessionResponse CreateSessionResponse()
