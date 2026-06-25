@@ -120,8 +120,13 @@ public sealed class EfAuthSessionStore(PlatformDbContext dbContext) : IAuthSessi
         CancellationToken cancellationToken)
     {
         var nowUtc = now.UtcDateTime;
-        var session = await QueryActiveSessions(nowUtc)
-            .Where(value => value.Session.AccessToken == accessToken && value.Session.AccessTokenExpiresAtUtc > nowUtc)
+        var session = await dbContext.UserSessions
+            .AsNoTracking()
+            .Where(value => value.Status == 1 &&
+                value.IdleExpiresAtUtc > nowUtc &&
+                value.RefreshTokenExpiresAtUtc > nowUtc &&
+                value.AccessTokenExpiresAtUtc > nowUtc &&
+                value.AccessToken == accessToken)
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -135,8 +140,13 @@ public sealed class EfAuthSessionStore(PlatformDbContext dbContext) : IAuthSessi
         CancellationToken cancellationToken)
     {
         var nowUtc = now.UtcDateTime;
-        var session = await QueryActiveSessions(nowUtc)
-            .Where(value => value.Session.SessionId == sessionId && value.Session.RefreshTokenHash == refreshTokenHash)
+        var session = await dbContext.UserSessions
+            .AsNoTracking()
+            .Where(value => value.Status == 1 &&
+                value.IdleExpiresAtUtc > nowUtc &&
+                value.RefreshTokenExpiresAtUtc > nowUtc &&
+                value.SessionId == sessionId &&
+                value.RefreshTokenHash == refreshTokenHash)
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -223,48 +233,49 @@ public sealed class EfAuthSessionStore(PlatformDbContext dbContext) : IAuthSessi
         return sessions.Length;
     }
 
-    private IQueryable<SessionJoin> QueryActiveSessions(DateTime nowUtc)
-    {
-        return dbContext.UserSessions
-            .AsNoTracking()
-            .Where(session => session.Status == 1 &&
-                session.IdleExpiresAtUtc > nowUtc &&
-                session.RefreshTokenExpiresAtUtc > nowUtc)
-            .Join(
-                dbContext.Users.AsNoTracking(),
-                session => session.UserId,
-                user => user.UserId,
-                (session, user) => new { session, user })
-            .Join(
-                dbContext.Roles.AsNoTracking(),
-                value => value.user.RoleId,
-                role => role.RoleId,
-                (value, role) => new SessionJoin(value.session, value.user, role));
-    }
-
     private async Task<AuthenticatedSessionSnapshot?> ToAuthenticatedSessionAsync(
-        SessionJoin? value,
+        UserSessionEntity? session,
         CancellationToken cancellationToken)
     {
-        if (value is null)
+        if (session is null)
         {
             return null;
         }
 
-        var permissions = await GetPermissionsAsync(value.Role.RoleId, cancellationToken).ConfigureAwait(false);
-        var session = value.Session;
-        var user = value.User;
-        var role = value.Role;
+        var userRole = await dbContext.Users
+            .AsNoTracking()
+            .Where(user => user.UserId == session.UserId)
+            .Join(
+                dbContext.Roles.AsNoTracking(),
+                user => user.RoleId,
+                role => role.RoleId,
+                (user, role) => new UserRoleSnapshot(
+                    user.UserId,
+                    user.FullName,
+                    user.UserName,
+                    user.Status,
+                    role.RoleId,
+                    role.Name,
+                    role.Status))
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (userRole is null)
+        {
+            return null;
+        }
+
+        var permissions = await GetPermissionsAsync(userRole.RoleId, cancellationToken).ConfigureAwait(false);
 
         return new AuthenticatedSessionSnapshot(
             session.SessionId,
-            user.UserId,
-            user.FullName,
-            user.UserName,
-            role.RoleId,
-            role.Name,
-            user.Status,
-            role.Status,
+            userRole.UserId,
+            userRole.FullName,
+            userRole.UserName,
+            userRole.RoleId,
+            userRole.RoleName,
+            userRole.UserStatus,
+            userRole.RoleStatus,
             session.SecurityVersion,
             new DateTimeOffset(session.StartedAtUtc, TimeSpan.Zero),
             new DateTimeOffset(session.IdleExpiresAtUtc, TimeSpan.Zero),
@@ -283,5 +294,12 @@ public sealed class EfAuthSessionStore(PlatformDbContext dbContext) : IAuthSessi
             .ConfigureAwait(false);
     }
 
-    private sealed record SessionJoin(UserSessionEntity Session, UserEntity User, RoleEntity Role);
+    private sealed record UserRoleSnapshot(
+        Guid UserId,
+        string FullName,
+        string UserName,
+        byte UserStatus,
+        Guid RoleId,
+        string RoleName,
+        byte RoleStatus);
 }
