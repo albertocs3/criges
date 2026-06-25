@@ -1,9 +1,13 @@
+using CriGes.Modules.Platform.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace CriGes.Modules.Platform.Infrastructure.Persistence.Migrations;
 
+[DbContext(typeof(PlatformDbContext))]
+[Migration("202606240003_AddUserSessions")]
 public partial class AddUserSessions : Migration
 {
     private static readonly string[] StatusIdleExpiresAtUtcColumns = ["Status", "IdleExpiresAtUtc"];

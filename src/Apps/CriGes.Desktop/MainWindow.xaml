@@ -177,11 +177,11 @@
                             <TextBlock Text="{Binding StatusText}" Foreground="#52616B" />
                             <TextBlock Foreground="#52616B" Margin="0,4,0,0">
                                 <Run Text="Version servidor: " />
-                                <Run Text="{Binding ServerVersion}" />
+                                <Run Text="{Binding ServerVersion, Mode=OneWay}" />
                             </TextBlock>
                             <TextBlock Foreground="#52616B" Margin="0,4,0,0">
                                 <Run Text="Version Desktop: " />
-                                <Run Text="{Binding ClientVersion}" />
+                                <Run Text="{Binding ClientVersion, Mode=OneWay}" />
                             </TextBlock>
                         </StackPanel>
                     </Border>

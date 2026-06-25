@@ -18,6 +18,25 @@ namespace CriGes.Modules.Platform.IntegrationTests.Initialization;
 public sealed class PlatformInitializationSqlIntegrationTests
 {
     [Fact]
+    public void PlatformDbContextExposesAllPlatformMigrations()
+    {
+        using var dbContext = CreateDbContext("Server=(localdb)\\MSSQLLocalDB;Database=CriGes_MigrationMetadata;Trusted_Connection=True;TrustServerCertificate=True");
+
+        var migrations = dbContext.Database.GetMigrations().ToArray();
+
+        Assert.Equal(
+            [
+                "202606240001_CreatePlatformSchema",
+                "202606240002_AddHttpIdempotencyRecords",
+                "202606240003_AddUserSessions",
+                "202606240004_AddRolePermissions",
+                "202606240005_AddUserPhone",
+                "202606240006_SeedCurrentBaseRolePermissions"
+            ],
+            migrations);
+    }
+
+    [Fact]
     public async Task InitializeEndpointPersistsRequiredPlatformDataInSqlServer()
     {
         var databaseName = $"CriGes_Integration_{Guid.NewGuid():N}";
