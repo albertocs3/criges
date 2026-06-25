@@ -567,10 +567,10 @@ public sealed class MainWindowViewModel : ObservableObject
 
     private Task LoginAsync(CancellationToken cancellationToken)
     {
-        return LoginCoreAsync(cancellationToken);
+        return LoginCoreAsync(allowDevelopmentSessionReset: true, cancellationToken);
     }
 
-    private async Task LoginCoreAsync(CancellationToken cancellationToken)
+    private async Task LoginCoreAsync(bool allowDevelopmentSessionReset, CancellationToken cancellationToken)
     {
         IsBusy = true;
         LoginMessage = "Iniciando sesion...";
@@ -598,6 +598,16 @@ public sealed class MainWindowViewModel : ObservableObject
         }
         catch (InstallationApiException ex)
         {
+            if (allowDevelopmentSessionReset &&
+                ex.Code == "AUTH.ACTIVE_SESSION_EXISTS" &&
+                await TryCloseDevelopmentActiveSessionsAsync(cancellationToken).ConfigureAwait(true))
+            {
+                IsBusy = false;
+                RaiseCommandStates();
+                await LoginCoreAsync(allowDevelopmentSessionReset: false, cancellationToken).ConfigureAwait(true);
+                return;
+            }
+
             LoginMessage = $"{(int)ex.StatusCode} - {ex.Message}";
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or UriFormatException)
@@ -608,6 +618,26 @@ public sealed class MainWindowViewModel : ObservableObject
         {
             IsBusy = false;
             RaiseCommandStates();
+        }
+    }
+
+    private async Task<bool> TryCloseDevelopmentActiveSessionsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            LoginMessage = "Sesion anterior detectada. Cerrando sesion activa de desarrollo...";
+            var response = await _apiClientFactory(ApiBaseUrl)
+                .CloseDevelopmentActiveSessionsAsync(
+                    new CloseActiveSessionsRequest(LoginUserName),
+                    cancellationToken)
+                .ConfigureAwait(true);
+
+            return response.ClosedSessions > 0;
+        }
+        catch (Exception ex) when (ex is InstallationApiException or HttpRequestException or TaskCanceledException or UriFormatException)
+        {
+            LoginMessage = "Ya existe una sesion activa para este usuario.";
+            return false;
         }
     }
 

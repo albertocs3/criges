@@ -196,6 +196,33 @@ public sealed class EfAuthSessionStore(PlatformDbContext dbContext) : IAuthSessi
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<int> CloseActiveSessionsForUserAsync(
+        string normalizedUserName,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        var nowUtc = now.UtcDateTime;
+        var sessions = await dbContext.UserSessions
+            .Where(session => session.Status == 1)
+            .Join(
+                dbContext.Users.Where(user => user.NormalizedUserName == normalizedUserName),
+                session => session.UserId,
+                user => user.UserId,
+                (session, _) => session)
+            .ToArrayAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var session in sessions)
+        {
+            session.Status = 2;
+            session.ClosedAtUtc = nowUtc;
+            session.LastActivityAtUtc = nowUtc;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return sessions.Length;
+    }
+
     private IQueryable<SessionJoin> QueryActiveSessions(DateTime nowUtc)
     {
         return dbContext.UserSessions

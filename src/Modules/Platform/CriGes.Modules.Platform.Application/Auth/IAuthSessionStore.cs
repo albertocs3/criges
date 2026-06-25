@@ -36,4 +36,9 @@ public interface IAuthSessionStore
         CancellationToken cancellationToken);
 
     Task CloseSessionAsync(Guid sessionId, DateTimeOffset now, CancellationToken cancellationToken);
+
+    Task<int> CloseActiveSessionsForUserAsync(
+        string normalizedUserName,
+        DateTimeOffset now,
+        CancellationToken cancellationToken);
 }

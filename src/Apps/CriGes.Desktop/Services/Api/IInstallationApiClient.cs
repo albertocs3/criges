@@ -30,6 +30,10 @@ public interface IInstallationApiClient
         string accessToken,
         CancellationToken cancellationToken = default);
 
+    Task<CloseActiveSessionsResponse> CloseDevelopmentActiveSessionsAsync(
+        CloseActiveSessionsRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<RoleSummaryResponse>> GetRolesAsync(
         string accessToken,
         CancellationToken cancellationToken = default);

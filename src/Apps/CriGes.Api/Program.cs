@@ -45,6 +45,10 @@ app.MapPlatformAuthEndpoints();
 app.MapPlatformPermissionEndpoints();
 app.MapPlatformAdministrationEndpoints();
 app.MapPlatformEndpoints();
+if (app.Environment.IsDevelopment())
+{
+    app.MapPlatformDevelopmentAuthEndpoints();
+}
 
 app.Run();
 

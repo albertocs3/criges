@@ -83,6 +83,27 @@ public sealed class PlatformAuthEndpointTests
     }
 
     [Fact]
+    public async Task DevelopmentCloseActiveSessionsClosesExistingSessionAndAllowsLoginAgain()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        await InitializeAsync(client);
+
+        var first = await client.PostAsJsonAsync("/api/v1/platform/auth/login", CreateLoginRequest());
+        var close = await client.PostAsJsonAsync(
+            "/api/v1/development/platform/auth/active-sessions/close",
+            new CloseActiveSessionsRequest("admin"));
+        var closed = await close.Content.ReadFromJsonAsync<CloseActiveSessionsResponse>();
+        var second = await client.PostAsJsonAsync("/api/v1/platform/auth/login", CreateLoginRequest() with { DeviceId = "WIN-CLIENT-02" });
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, close.StatusCode);
+        Assert.NotNull(closed);
+        Assert.Equal(1, closed.ClosedSessions);
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+    }
+
+    [Fact]
     public async Task GetMeReturnsUnauthorizedWithoutBearerToken()
     {
         await using var factory = CreateFactory();

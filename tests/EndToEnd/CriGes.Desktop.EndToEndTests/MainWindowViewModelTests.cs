@@ -95,6 +95,31 @@ public sealed class MainWindowViewModelTests
         Assert.True(viewModel.IsLoginVisible);
     }
 
+    [Fact]
+    public async Task LoginClosesDevelopmentActiveSessionAndRetriesOnce()
+    {
+        var apiClient = new ReadyInstallationApiClient
+        {
+            FailNextLoginWithActiveSession = true
+        };
+        var viewModel = new MainWindowViewModel(
+            new DesktopSettings
+            {
+                Api = new DesktopSettings.ApiSettings { BaseUrl = "http://localhost:5099/" }
+            },
+            _ => apiClient);
+
+        await viewModel.CheckApiCommand.ExecuteAsync();
+        viewModel.LoginUserName = "admin";
+        viewModel.LoginPassword = "Password123!";
+
+        await viewModel.LoginCommand.ExecuteAsync();
+
+        Assert.Equal(1, apiClient.CloseDevelopmentActiveSessionsCalls);
+        Assert.True(viewModel.IsShellVisible);
+        Assert.Equal("Administrador", viewModel.CurrentUserDisplayName);
+    }
+
     private sealed class ReadyInstallationApiClient : IInstallationApiClient
     {
         private readonly Guid _administratorRoleId = Guid.NewGuid();
@@ -105,6 +130,10 @@ public sealed class MainWindowViewModelTests
         public CreateUserRequest? LastCreateUserRequest { get; private set; }
 
         public IReadOnlyList<string> LastUpdatedRolePermissions { get; private set; } = [];
+
+        public bool FailNextLoginWithActiveSession { get; set; }
+
+        public int CloseDevelopmentActiveSessionsCalls { get; private set; }
 
         public ReadyInstallationApiClient()
         {
@@ -152,6 +181,16 @@ public sealed class MainWindowViewModelTests
             LoginRequest request,
             CancellationToken cancellationToken = default)
         {
+            if (FailNextLoginWithActiveSession)
+            {
+                FailNextLoginWithActiveSession = false;
+                throw new InstallationApiException(
+                    System.Net.HttpStatusCode.Conflict,
+                    "An active session already exists for this user.",
+                    "La sesion anterior sigue activa.",
+                    "AUTH.ACTIVE_SESSION_EXISTS");
+            }
+
             return Task.FromResult(CreateSessionResponse());
         }
 
@@ -180,6 +219,14 @@ public sealed class MainWindowViewModelTests
             CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
+        }
+
+        public Task<CloseActiveSessionsResponse> CloseDevelopmentActiveSessionsAsync(
+            CloseActiveSessionsRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            CloseDevelopmentActiveSessionsCalls++;
+            return Task.FromResult(new CloseActiveSessionsResponse(1));
         }
 
         public Task<IReadOnlyList<RoleSummaryResponse>> GetRolesAsync(

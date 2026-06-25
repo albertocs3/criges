@@ -182,6 +182,33 @@ public sealed class InstallationApiClient : IInstallationApiClient
         }
     }
 
+    public async Task<CloseActiveSessionsResponse> CloseDevelopmentActiveSessionsAsync(
+        CloseActiveSessionsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "api/v1/development/platform/auth/active-sessions/close")
+        {
+            Content = JsonContent.Create(request, options: JsonOptions)
+        };
+
+        httpRequest.Headers.Add("X-Correlation-Id", Guid.NewGuid().ToString("N"));
+
+        using var response = await _httpClient.SendAsync(httpRequest, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            throw await InstallationApiException.FromResponseAsync(response, cancellationToken).ConfigureAwait(false);
+        }
+
+        var result = await response.Content
+            .ReadFromJsonAsync<CloseActiveSessionsResponse>(JsonOptions, cancellationToken)
+            .ConfigureAwait(false);
+
+        return result ?? throw new InstallationApiException(
+            HttpStatusCode.InternalServerError,
+            "Respuesta vacia",
+            "La API no devolvio el resultado de cierre de sesiones.");
+    }
+
     public async Task<IReadOnlyList<RoleSummaryResponse>> GetRolesAsync(
         string accessToken,
         CancellationToken cancellationToken = default)

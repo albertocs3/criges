@@ -199,6 +199,28 @@ public sealed class InstallationApiClientTests
     }
 
     [Fact]
+    public async Task CloseDevelopmentActiveSessionsAsyncSendsUserName()
+    {
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/api/v1/development/platform/auth/active-sessions/close", request.RequestUri?.AbsolutePath);
+            Assert.True(request.Headers.Contains("X-Correlation-Id"));
+
+            return JsonResponse(new CloseActiveSessionsResponse(1));
+        }))
+        {
+            BaseAddress = new Uri("http://localhost:5099/")
+        };
+
+        var client = new InstallationApiClient(httpClient);
+
+        var response = await client.CloseDevelopmentActiveSessionsAsync(new CloseActiveSessionsRequest("admin"));
+
+        Assert.Equal(1, response.ClosedSessions);
+    }
+
+    [Fact]
     public async Task GetRolesAsyncSendsBearerToken()
     {
         using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>

@@ -199,6 +199,36 @@ public sealed class InMemoryAuthSessionStore(InMemoryPlatformInitializationStore
         return Task.CompletedTask;
     }
 
+    public Task<int> CloseActiveSessionsForUserAsync(
+        string normalizedUserName,
+        DateTimeOffset now,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        lock (syncRoot)
+        {
+            var snapshot = initializationStore.GetSnapshot();
+            if (snapshot?.Administrator.UserName.NormalizedValue != normalizedUserName)
+            {
+                return Task.FromResult(0);
+            }
+
+            var sessionIds = sessions
+                .Where(session => session.UserId == snapshot.Administrator.UserId)
+                .Select(session => session.SessionId)
+                .ToArray();
+
+            sessions.RemoveAll(session => sessionIds.Contains(session.SessionId));
+            foreach (var sessionId in sessionIds)
+            {
+                authenticatedSessions.Remove(sessionId);
+            }
+
+            return Task.FromResult(sessionIds.Length);
+        }
+    }
+
     private void UpdateSession(Guid sessionId, Func<AuthSessionSnapshot, AuthSessionSnapshot> update)
     {
         var index = sessions.FindIndex(value => value.SessionId == sessionId);
