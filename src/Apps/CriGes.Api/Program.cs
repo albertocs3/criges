@@ -36,6 +36,8 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+await ApplyDevelopmentMigrationsAsync(app);
+
 app.UseMiddleware<CorrelationIdMiddleware>();
 app.UseMiddleware<PlatformBearerTokenMiddleware>();
 app.UseRateLimiter();
@@ -53,6 +55,34 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+static async Task ApplyDevelopmentMigrationsAsync(WebApplication app)
+{
+    var applyMigrationsOnStartup = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup") ?? true;
+    if (!app.Environment.IsDevelopment() || !applyMigrationsOnStartup)
+    {
+        return;
+    }
+
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<PlatformDbContext>();
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("CriGes.DatabaseMigration");
+
+    var logApplyingMigrations = LoggerMessage.Define(
+        LogLevel.Information,
+        new EventId(1000, "ApplyingDevelopmentMigrations"),
+        "Applying database migrations for Development environment.");
+    var logMigrationsApplied = LoggerMessage.Define(
+        LogLevel.Information,
+        new EventId(1001, "DevelopmentMigrationsApplied"),
+        "Database migrations applied.");
+
+    logApplyingMigrations(logger, null);
+    await dbContext.Database.MigrateAsync().ConfigureAwait(false);
+    logMigrationsApplied(logger, null);
+}
 
 static async Task<IResult> GetReadinessAsync(PlatformDbContext dbContext, CancellationToken cancellationToken)
 {
